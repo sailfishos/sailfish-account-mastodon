@@ -1,0 +1,337 @@
+import QtQuick 2.0
+import Sailfish.Silica 1.0
+import Sailfish.Accounts 1.0
+import com.jolla.settings.accounts 1.0
+
+AccountCreationAgent {
+    id: root
+
+    property Item _oauthPage
+    property Item _settingsDialog
+    property QtObject _accountSetup
+
+    property string _pendingApiHost
+    property bool _registering
+
+    readonly property string callbackUri: "http://ipv4.jolla.com/online/status.html"
+
+    function normalizeApiHost(rawHost) {
+        var host = rawHost ? rawHost.trim() : ""
+        if (host.length === 0) {
+            return ""
+        }
+
+        host = host.replace(/^https?:\/\//i, "")
+        var pathSeparator = host.indexOf("/")
+        if (pathSeparator !== -1) {
+            host = host.substring(0, pathSeparator)
+        }
+        host = host.replace(/\/+$/, "")
+
+        if (host.length === 0) {
+            return ""
+        }
+        return "https://" + host.toLowerCase()
+    }
+
+    function oauthHost(apiHost) {
+        return apiHost.replace(/^https?:\/\//i, "")
+    }
+
+    function _displayName(apiHost) {
+        return oauthHost(apiHost)
+    }
+
+    function _showRegistrationError(message, busyPage) {
+        _registering = false
+        accountCreationError(message)
+        if (busyPage) {
+            busyPage.state = "info"
+            busyPage.infoDescription = message
+            busyPage.infoExtraDescription = ""
+            busyPage.infoButtonText = ""
+        }
+    }
+
+    function _showOAuthPage(context) {
+        _registering = false
+        if (_oauthPage != null) {
+            _oauthPage.cancelSignIn()
+            _oauthPage.destroy()
+        }
+        _oauthPage = oAuthComponent.createObject(root, { "context": context })
+        pageStack.replace(_oauthPage)
+    }
+
+    function _registerClientApplication(apiHost, busyPage) {
+        if (_registering) {
+            return
+        }
+        _registering = true
+
+        var xhr = new XMLHttpRequest()
+        xhr.onreadystatechange = function() {
+            if (xhr.readyState !== XMLHttpRequest.DONE) {
+                return
+            }
+
+            if (xhr.status < 200 || xhr.status >= 300) {
+                _showRegistrationError("Failed to register Mastodon app for " + apiHost, busyPage)
+                return
+            }
+
+            var response
+            try {
+                response = JSON.parse(xhr.responseText)
+            } catch (err) {
+                _showRegistrationError("Invalid Mastodon app registration response", busyPage)
+                return
+            }
+
+            if (!response.client_id || !response.client_secret) {
+                _showRegistrationError("Mastodon app registration did not return credentials", busyPage)
+                return
+            }
+
+            _showOAuthPage({
+                "apiHost": apiHost,
+                "oauthHost": oauthHost(apiHost),
+                "clientId": response.client_id,
+                "clientSecret": response.client_secret
+            })
+        }
+
+        var postData = []
+        postData.push("client_name=" + encodeURIComponent("Sailfish Mastodon"))
+        postData.push("redirect_uris=" + encodeURIComponent(callbackUri))
+        postData.push("scopes=" + encodeURIComponent("read write"))
+        postData.push("website=" + encodeURIComponent("https://sailfishos.org"))
+
+        xhr.open("POST", apiHost + "/api/v1/apps")
+        xhr.setRequestHeader("Content-Type", "application/x-www-form-urlencoded")
+        xhr.send(postData.join("&"))
+    }
+
+    function _handleAccountCreated(accountId, context) {
+        var props = {
+            "accountId": accountId,
+            "apiHost": context.apiHost,
+            "oauthHost": context.oauthHost,
+            "clientId": context.clientId,
+            "clientSecret": context.clientSecret
+        }
+        _accountSetup = accountSetupComponent.createObject(root, props)
+        _accountSetup.done.connect(function() {
+            accountCreated(accountId)
+            _goToSettings(accountId)
+        })
+        _accountSetup.error.connect(function() {
+            accountCreationError("Failed to finish Mastodon account setup")
+        })
+    }
+
+    function _goToSettings(accountId) {
+        if (_settingsDialog != null) {
+            _settingsDialog.destroy()
+        }
+        _settingsDialog = settingsComponent.createObject(root, {"accountId": accountId})
+        pageStack.replace(_settingsDialog)
+    }
+
+    initialPage: Dialog {
+        id: setupDialog
+
+        property string normalizedHost: root.normalizeApiHost(instanceField.text)
+
+        canAccept: !root._registering && normalizedHost.length > 0
+        acceptDestinationAction: PageStackAction.Push
+        acceptDestination: busyComponent
+
+        onAccepted: {
+            root._pendingApiHost = normalizedHost
+        }
+
+        DialogHeader {
+            id: header
+            //% "Sign in"
+            acceptText: qsTrId("settings_accounts-common-bt-sign_in")
+        }
+
+        Column {
+            anchors.top: header.bottom
+            anchors.topMargin: Theme.paddingLarge
+            spacing: Theme.paddingLarge
+            width: parent.width
+
+            Label {
+                x: Theme.horizontalPageMargin
+                width: parent.width - x * 2
+                wrapMode: Text.Wrap
+                color: Theme.highlightColor
+                text: "Enter your Mastodon server, then sign in."
+            }
+
+            TextField {
+                id: instanceField
+                x: Theme.horizontalPageMargin
+                width: parent.width - x * 2
+                label: "Server"
+                placeholderText: "mastodon.social"
+                inputMethodHints: Qt.ImhNoAutoUppercase | Qt.ImhUrlCharactersOnly
+                EnterKey.iconSource: "image://theme/icon-m-enter-next"
+                EnterKey.onClicked: {
+                    if (setupDialog.canAccept) {
+                        setupDialog.accept()
+                    }
+                }
+            }
+        }
+    }
+
+    Component {
+        id: busyComponent
+        AccountBusyPage {
+            busyDescription: "Preparing Mastodon sign-in..."
+            onStatusChanged: {
+                if (status === PageStatus.Active && root._pendingApiHost.length > 0) {
+                    root._registerClientApplication(root._pendingApiHost, this)
+                }
+            }
+        }
+    }
+
+    Component {
+        id: oAuthComponent
+        OAuthAccountSetupPage {
+            property var context
+
+            Component.onCompleted: {
+                var sessionData = {
+                    "ClientId": context.clientId,
+                    "ClientSecret": context.clientSecret,
+                    "Host": context.oauthHost,
+                    "AuthPath": "oauth/authorize",
+                    "TokenPath": "oauth/token",
+                    "ResponseType": "code",
+                    "Scope": ["read", "write"],
+                    "RedirectUri": root.callbackUri
+                }
+                prepareAccountCreation(root.accountProvider, "mastodon-microblog", sessionData)
+            }
+
+            onAccountCreated: {
+                root._handleAccountCreated(accountId, context)
+            }
+
+            onAccountCreationError: {
+                root.accountCreationError(errorMessage)
+            }
+        }
+    }
+
+    Component {
+        id: accountSetupComponent
+        QtObject {
+            id: accountSetup
+
+            property int accountId
+            property string apiHost
+            property string oauthHost
+            property string clientId
+            property string clientSecret
+            property bool hasConfigured
+
+            signal done()
+            signal error()
+
+            property Account newAccount: Account {
+                identifier: accountSetup.accountId
+
+                onStatusChanged: {
+                    if (status === Account.Initialized || status === Account.Synced) {
+                        if (!accountSetup.hasConfigured) {
+                            accountSetup.configure()
+                        } else {
+                            accountSetup.done()
+                        }
+                    } else if (status === Account.Invalid && accountSetup.hasConfigured) {
+                        accountSetup.error()
+                    }
+                }
+            }
+
+            function configure() {
+                hasConfigured = true
+
+                var services = ["mastodon-microblog", "mastodon-sharing"]
+                var providerDisplayName = root._displayName(apiHost)
+                if (providerDisplayName.length > 0) {
+                    newAccount.displayName = providerDisplayName
+                }
+
+                newAccount.setConfigurationValue("", "api/Host", apiHost)
+                newAccount.setConfigurationValue("", "FeedViewAutoSync", true)
+                for (var i = 0; i < services.length; ++i) {
+                    var service = services[i]
+                    newAccount.setConfigurationValue(service, "api/Host", apiHost)
+                    newAccount.setConfigurationValue(service, "auth/oauth2/web_server/Host", oauthHost)
+                    newAccount.setConfigurationValue(service, "auth/oauth2/web_server/AuthPath", "oauth/authorize")
+                    newAccount.setConfigurationValue(service, "auth/oauth2/web_server/TokenPath", "oauth/token")
+                    newAccount.setConfigurationValue(service, "auth/oauth2/web_server/ResponseType", "code")
+                    newAccount.setConfigurationValue(service, "auth/oauth2/web_server/RedirectUri", root.callbackUri)
+                    newAccount.setConfigurationValue(service, "auth/oauth2/web_server/Scope", ["read", "write"])
+                    newAccount.setConfigurationValue(service, "auth/oauth2/web_server/ClientId", clientId)
+                    newAccount.setConfigurationValue(service, "auth/oauth2/web_server/ClientSecret", clientSecret)
+                }
+
+                for (var j = 0; j < services.length; ++j) {
+                    newAccount.enableWithService(services[j])
+                }
+
+                newAccount.sync()
+            }
+        }
+    }
+
+    Component {
+        id: settingsComponent
+        Dialog {
+            property alias accountId: settingsDisplay.accountId
+
+            acceptDestination: root.endDestination
+            acceptDestinationAction: root.endDestinationAction
+            acceptDestinationProperties: root.endDestinationProperties
+            acceptDestinationReplaceTarget: root.endDestinationReplaceTarget
+            backNavigation: false
+
+            onAccepted: {
+                root.delayDeletion = true
+                settingsDisplay.saveAccountAndSync()
+            }
+
+            SilicaFlickable {
+                anchors.fill: parent
+                contentHeight: header.height + settingsDisplay.height
+
+                DialogHeader {
+                    id: header
+                }
+
+                MastodonSettingsDisplay {
+                    id: settingsDisplay
+                    anchors.top: header.bottom
+                    accountManager: root.accountManager
+                    accountProvider: root.accountProvider
+                    autoEnableAccount: true
+
+                    onAccountSaveCompleted: {
+                        root.delayDeletion = false
+                    }
+                }
+
+                VerticalScrollDecorator {}
+            }
+        }
+    }
+
+}

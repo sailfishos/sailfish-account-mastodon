@@ -1,0 +1,28 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<service id="mastodon-sharing">
+    <type>sharing</type>
+    <name>Sharing</name>
+    <icon>image://theme/icon-m-share</icon>
+    <provider>mastodon</provider>
+
+    <template>
+        <group name="auth">
+            <setting name="method">oauth2</setting>
+            <setting name="mechanism">web_server</setting>
+            <group name="oauth2">
+                <group name="web_server">
+                    <setting name="Host">mastodon.social</setting>
+                    <setting name="AllowedSchemes" type="as">["https"]</setting>
+                    <setting name="AuthPath">oauth/authorize</setting>
+                    <setting name="TokenPath">oauth/token</setting>
+                    <setting name="ResponseType">code</setting>
+                    <setting name="Scope" type="as">["read","write"]</setting>
+                    <setting name="RedirectUri">http://ipv4.jolla.com/online/status.html</setting>
+                </group>
+            </group>
+        </group>
+        <group name="api">
+            <setting name="Host">https://mastodon.social</setting>
+        </group>
+    </template>
+</service>
