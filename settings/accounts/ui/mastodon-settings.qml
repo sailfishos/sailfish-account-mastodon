@@ -6,6 +6,21 @@ import com.jolla.settings.accounts 1.0
 AccountSettingsAgent {
     id: root
 
+    property string accountSubtitle: {
+        var credentialsUserName = account.defaultCredentialsUserName
+                ? account.defaultCredentialsUserName.toString().trim()
+                : ""
+        if (credentialsUserName.length > 0) {
+            return credentialsUserName
+        }
+        return account.displayName
+    }
+
+    Account {
+        id: account
+        identifier: root.accountId
+    }
+
     initialPage: Page {
         onPageContainerChanged: {
             if (pageContainer == null && !credentialsUpdater.running) {
@@ -46,6 +61,7 @@ AccountSettingsAgent {
             PageHeader {
                 id: header
                 title: root.accountsHeaderText
+                description: root.accountSubtitle
             }
 
             MastodonSettingsDisplay {

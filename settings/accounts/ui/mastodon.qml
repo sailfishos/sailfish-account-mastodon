@@ -76,7 +76,8 @@ AccountCreationAgent {
             }
 
             if (xhr.status < 200 || xhr.status >= 300) {
-                _showRegistrationError("Failed to register Mastodon app for " + apiHost, busyPage)
+                //% "Failed to register Mastodon app for %1"
+                _showRegistrationError(qsTrId("settings-accounts-mastodon-la-register_app_failed").arg(apiHost), busyPage)
                 return
             }
 
@@ -84,12 +85,14 @@ AccountCreationAgent {
             try {
                 response = JSON.parse(xhr.responseText)
             } catch (err) {
-                _showRegistrationError("Invalid Mastodon app registration response", busyPage)
+                //% "Invalid Mastodon app registration response"
+                _showRegistrationError(qsTrId("settings-accounts-mastodon-la-invalid_app_registration_response"), busyPage)
                 return
             }
 
             if (!response.client_id || !response.client_secret) {
-                _showRegistrationError("Mastodon app registration did not return credentials", busyPage)
+                //% "Mastodon app registration did not return credentials"
+                _showRegistrationError(qsTrId("settings-accounts-mastodon-la-app_registration_missing_credentials"), busyPage)
                 return
             }
 
@@ -102,7 +105,8 @@ AccountCreationAgent {
         }
 
         var postData = []
-        postData.push("client_name=" + encodeURIComponent("Sailfish Mastodon"))
+        //% "Sailfish Mastodon"
+        postData.push("client_name=" + encodeURIComponent(qsTrId("settings-accounts-mastodon-la-client_name")))
         postData.push("redirect_uris=" + encodeURIComponent(callbackUri))
         postData.push("scopes=" + encodeURIComponent("read write"))
         postData.push("website=" + encodeURIComponent("https://sailfishos.org"))
@@ -126,7 +130,8 @@ AccountCreationAgent {
             _goToSettings(accountId)
         })
         _accountSetup.error.connect(function() {
-            accountCreationError("Failed to finish Mastodon account setup")
+            //% "Failed to finish Mastodon account setup"
+            accountCreationError(qsTrId("settings-accounts-mastodon-la-account_setup_failed"))
         })
     }
 
@@ -154,7 +159,7 @@ AccountCreationAgent {
         DialogHeader {
             id: header
             //% "Sign in"
-            acceptText: qsTrId("settings_accounts-common-bt-sign_in")
+            acceptText: qsTrId("settings-accounts-common-bt-sign_in")
         }
 
         Column {
@@ -163,19 +168,34 @@ AccountCreationAgent {
             spacing: Theme.paddingLarge
             width: parent.width
 
-            Label {
+            Row {
                 x: Theme.horizontalPageMargin
                 width: parent.width - x * 2
-                wrapMode: Text.Wrap
-                color: Theme.highlightColor
-                text: "Enter your Mastodon server, then sign in."
+                spacing: Theme.paddingMedium
+
+                Icon {
+                    id: promptIcon
+                    width: Theme.iconSizeMedium
+                    height: Theme.iconSizeMedium
+                    source: "image://theme/icon-l-mastodon"
+                }
+
+                //: Prompt shown in account setup before OAuth sign-in.
+                Label {
+                    width: parent.width - promptIcon.width - parent.spacing
+                    wrapMode: Text.Wrap
+                    color: Theme.highlightColor
+                    //% "Enter your Mastodon server, then sign in."
+                    text: qsTrId("settings-accounts-mastodon-la-enter_server_then_sign_in")
+                }
             }
 
             TextField {
                 id: instanceField
                 x: Theme.horizontalPageMargin
                 width: parent.width - x * 2
-                label: "Server"
+                //% "Server"
+                label: qsTrId("settings-accounts-mastodon-la-server")
                 placeholderText: "mastodon.social"
                 inputMethodHints: Qt.ImhNoAutoUppercase | Qt.ImhUrlCharactersOnly
                 EnterKey.iconSource: "image://theme/icon-m-enter-next"
@@ -191,7 +211,8 @@ AccountCreationAgent {
     Component {
         id: busyComponent
         AccountBusyPage {
-            busyDescription: "Preparing Mastodon sign-in..."
+            //% "Preparing Mastodon sign-in..."
+            busyDescription: qsTrId("settings-accounts-mastodon-la-preparing_sign_in")
             onStatusChanged: {
                 if (status === PageStatus.Active && root._pendingApiHost.length > 0) {
                     root._registerClientApplication(root._pendingApiHost, this)
@@ -264,8 +285,13 @@ AccountCreationAgent {
                 hasConfigured = true
 
                 var services = ["mastodon-microblog", "mastodon-sharing"]
+                var credentialsUserName = newAccount.defaultCredentialsUserName
+                        ? newAccount.defaultCredentialsUserName.toString().trim()
+                        : ""
                 var providerDisplayName = root._displayName(apiHost)
-                if (providerDisplayName.length > 0) {
+                if (credentialsUserName.length > 0) {
+                    newAccount.displayName = credentialsUserName
+                } else if (providerDisplayName.length > 0) {
                     newAccount.displayName = providerDisplayName
                 }
 

@@ -72,6 +72,14 @@ Requires: %{name} = %{version}-%{release}
 %description -n transferengine-plugin-mastodon
 Mastodon image sharing plugin for Transfer Engine.
 
+%package -n sailfish-account-mastodon-ts-devel
+Summary: Translation source files for sailfish-account-mastodon
+Requires: %{name} = %{version}-%{release}
+Requires: eventsview-extensions-mastodon = %{version}-%{release}
+
+%description -n sailfish-account-mastodon-ts-devel
+Translation source files for sailfish-account-mastodon components.
+
 %prep
 %setup -q -n %{name}-%{version}
 
@@ -81,8 +89,6 @@ Mastodon image sharing plugin for Transfer Engine.
 
 %install
 %qmake5_install
-cd icons
-make INSTALL_ROOT=%{buildroot} install
 
 %post
 /sbin/ldconfig
@@ -106,6 +112,7 @@ fi
 %{_datadir}/accounts/ui/mastodon.qml
 %{_datadir}/accounts/ui/mastodon-settings.qml
 %{_datadir}/accounts/ui/mastodon-update.qml
+%{_datadir}/translations/settings-accounts-mastodon_eng_en.qm
 %{_datadir}/themes/sailfish-default/silica/*/icons/icon-l-mastodon.png
 
 %files -n buteo-sync-plugin-mastodon-posts
@@ -123,6 +130,9 @@ fi
 %{_datadir}/lipstick/eventfeed/mastodon-delegate.qml
 %{_datadir}/lipstick/eventfeed/MastodonFeedItem.qml
 %{_datadir}/translations/lipstick-jolla-home-mastodon_eng_en.qm
+
+%files -n sailfish-account-mastodon-ts-devel
+%{_datadir}/translations/source/settings-accounts-mastodon.ts
 %{_datadir}/translations/source/lipstick-jolla-home-mastodon.ts
 
 %files -n transferengine-plugin-mastodon

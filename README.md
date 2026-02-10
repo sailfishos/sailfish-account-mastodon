@@ -44,6 +44,7 @@ Sailfish OS account integration for Mastodon.
   - `eventsview-extensions-mastodon`
   - `transferengine-plugin-mastodon`
 - Main package requires all feature subpackages.
+- `%qmake5_install` already installs icon outputs from the `icons/` subproject; avoid a second explicit `icons` `make install` in `%install`.
 
 ### Root project
 - `sailfish-account-mastodon.pro` ties subprojects together.

@@ -28,6 +28,13 @@ StandardAccountSettingsDisplay {
             syncServicesRepeater.model = syncServices
             otherServicesDisplay.serviceModel = otherServices
 
+            var credentialsUserName = root.account.defaultCredentialsUserName
+                    ? root.account.defaultCredentialsUserName.toString().trim()
+                    : ""
+            if (credentialsUserName.length > 0 && root.account.displayName !== credentialsUserName) {
+                root.account.displayName = credentialsUserName
+            }
+
             var autoSync = root.account.configurationValues("")["FeedViewAutoSync"]
             var isNewAccount = root.autoEnableAccount
             eventsSyncSwitch.checked = (isNewAccount || autoSync === true)
