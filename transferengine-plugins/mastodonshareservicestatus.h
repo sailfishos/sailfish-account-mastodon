@@ -60,7 +60,6 @@ private:
         Error
     };
 
-    static QString normalizeApiHost(const QString &rawHost);
     void setAccountDetailsState(int accountId, AccountDetailsState state);
     void signIn(int accountId);
 

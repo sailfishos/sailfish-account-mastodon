@@ -1,0 +1,2 @@
+module com.jolla.settings.accounts.mastodon
+plugin mastodonaccountstranslationsplugin

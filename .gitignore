@@ -6,3 +6,5 @@ Makefile
 moc_*.cpp
 *.moc
 *.png
+*.ts
+*.qm

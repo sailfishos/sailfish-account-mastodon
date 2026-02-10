@@ -31,6 +31,8 @@
 
 #include <notification.h>
 
+#include <algorithm>
+
 #define OPEN_BROWSER_ACTION(openUrlArgs)    \
     Notification::remoteAction(             \
         "default",                          \
@@ -45,8 +47,9 @@
 namespace {
     const char *const NotificationCategory = "x-nemo.social.mastodon.notification";
     const char *const LastReadIdProperty = "mastodonLastReadId";
+    const char *const NotificationIdHint = "x-nemo.sociald.notification-id";
     const int NotificationsPageLimit = 80;
-    const uint NotificationDismissedReason = 2;
+    const uint NotificationDismissedReason = 1;
 
     QString decodeHtmlEntities(QString text)
     {
@@ -118,41 +121,12 @@ namespace {
         return QStringLiteral("sent you a notification");
     }
 
-    QList<QPair<QString, SocialPostImage::ImageType> > parseMediaAttachments(const QJsonObject &statusObject)
-    {
-        QList<QPair<QString, SocialPostImage::ImageType> > imageList;
-
-        const QJsonArray mediaAttachments = statusObject.value(QStringLiteral("media_attachments")).toArray();
-        foreach (const QJsonValue &attachmentValue, mediaAttachments) {
-            const QJsonObject attachment = attachmentValue.toObject();
-            const QString mediaType = attachment.value(QStringLiteral("type")).toString();
-
-            QString mediaUrl;
-            SocialPostImage::ImageType imageType = SocialPostImage::Invalid;
-            if (mediaType == QLatin1String("image")) {
-                mediaUrl = attachment.value(QStringLiteral("url")).toString();
-                imageType = SocialPostImage::Photo;
-            } else if (mediaType == QLatin1String("video") || mediaType == QLatin1String("gifv")) {
-                mediaUrl = attachment.value(QStringLiteral("preview_url")).toString();
-                if (mediaUrl.isEmpty()) {
-                    mediaUrl = attachment.value(QStringLiteral("url")).toString();
-                }
-                imageType = SocialPostImage::Video;
-            }
-
-            if (!mediaUrl.isEmpty() && imageType != SocialPostImage::Invalid) {
-                imageList.append(qMakePair(mediaUrl, imageType));
-            }
-        }
-
-        return imageList;
-    }
 }
 
 MastodonNotificationsSyncAdaptor::MastodonNotificationsSyncAdaptor(QObject *parent)
     : MastodonNotificationsDataTypeSyncAdaptor(SocialNetworkSyncAdaptor::Notifications, parent)
 {
-    setInitialActive(m_db.isValid());
+    setInitialActive(true);
 }
 
 MastodonNotificationsSyncAdaptor::~MastodonNotificationsSyncAdaptor()
@@ -166,17 +140,7 @@ QString MastodonNotificationsSyncAdaptor::syncServiceName() const
 
 void MastodonNotificationsSyncAdaptor::purgeDataForOldAccount(int oldId, SocialNetworkSyncAdaptor::PurgeMode)
 {
-    Notification *notification = findNotification(oldId);
-    if (notification) {
-        notification->close();
-        notification->deleteLater();
-    }
-
-    m_db.removePosts(oldId);
-    m_db.commit();
-    m_db.wait();
-
-    purgeCachedImages(&m_imageCacheDb, oldId);
+    closeAccountNotifications(oldId);
 
     m_pendingSyncStates.remove(oldId);
     m_accessTokens.remove(oldId);
@@ -193,12 +157,10 @@ void MastodonNotificationsSyncAdaptor::beginSync(int accountId, const QString &a
 void MastodonNotificationsSyncAdaptor::finalize(int accountId)
 {
     if (syncAborted()) {
-        qCInfo(lcSocialPlugin) << "sync aborted, won't commit database changes";
-    } else {
-        m_db.commit();
-        m_db.wait();
-        purgeExpiredImages(&m_imageCacheDb, accountId);
+        qCInfo(lcSocialPlugin) << "sync aborted, won't update notifications";
     }
+
+    Q_UNUSED(accountId)
 }
 
 QString MastodonNotificationsSyncAdaptor::sanitizeContent(const QString &content)
@@ -269,6 +231,11 @@ int MastodonNotificationsSyncAdaptor::compareNotificationIds(const QString &left
         return left.size() < right.size() ? -1 : 1;
     }
     return left < right ? -1 : 1;
+}
+
+QString MastodonNotificationsSyncAdaptor::notificationObjectKey(int accountId, const QString &notificationId)
+{
+    return QString::number(accountId) + QLatin1Char(':') + notificationId;
 }
 
 void MastodonNotificationsSyncAdaptor::requestUnreadMarker(int accountId, const QString &accessToken)
@@ -369,7 +336,6 @@ void MastodonNotificationsSyncAdaptor::finishedUnreadMarkerHandler()
     PendingSyncState state;
     state.accessToken = accessToken;
     state.minReadId = minReadId;
-    state.maxNotificationId = minReadId;
     m_pendingSyncStates.insert(accountId, state);
 
     requestNotifications(accountId, accessToken, minReadId);
@@ -397,31 +363,17 @@ void MastodonNotificationsSyncAdaptor::finishedNotificationsHandler()
     if (state.accessToken.isEmpty()) {
         state.accessToken = accessToken;
         state.minReadId = minId;
-        state.maxNotificationId = minId;
     }
 
     bool ok = false;
     const QJsonArray notifications = parseJsonArrayReplyData(replyData, &ok);
     if (!isError && ok) {
         if (!notifications.size()) {
-            if (!state.dbCleared) {
-                m_db.removePosts(accountId);
-                state.dbCleared = true;
-            }
-            Notification *notification = findNotification(accountId);
-            if (notification) {
-                notification->close();
-                notification->deleteLater();
-            }
+            closeAccountNotifications(accountId);
             qCDebug(lcSocialPlugin) << "no notifications received for account" << accountId;
             m_pendingSyncStates.remove(accountId);
             decrementSemaphore(accountId);
             return;
-        }
-
-        if (!state.dbCleared) {
-            m_db.removePosts(accountId);
-            state.dbCleared = true;
         }
 
         QString pageMinNotificationId;
@@ -441,10 +393,6 @@ void MastodonNotificationsSyncAdaptor::finishedNotificationsHandler()
                     || compareNotificationIds(notificationId, pageMinNotificationId) < 0) {
                 pageMinNotificationId = notificationId;
             }
-            if (state.maxNotificationId.isEmpty()
-                    || compareNotificationIds(notificationId, state.maxNotificationId) > 0) {
-                state.maxNotificationId = notificationId;
-            }
 
             const QString notificationType = notificationObject.value(QStringLiteral("type")).toString();
             const QJsonObject actorObject = notificationObject.value(QStringLiteral("account")).toObject();
@@ -463,11 +411,6 @@ void MastodonNotificationsSyncAdaptor::finishedNotificationsHandler()
 
             const QString displayName = displayNameForAccount(actorObject);
             const QString accountName = actorObject.value(QStringLiteral("acct")).toString();
-
-            QString icon = actorObject.value(QStringLiteral("avatar_static")).toString();
-            if (icon.isEmpty()) {
-                icon = actorObject.value(QStringLiteral("avatar")).toString();
-            }
 
             const QString statusBody = sanitizeContent(statusObject.value(QStringLiteral("content")).toString());
             const QString action = actionText(notificationType);
@@ -495,33 +438,13 @@ void MastodonNotificationsSyncAdaptor::finishedNotificationsHandler()
                 url = QStringLiteral("%1/@%2").arg(apiHost(accountId), accountName);
             }
 
-            QString boostedBy;
-            if (notificationType == QLatin1String("reblog")
-                    || notificationType == QLatin1String("favourite")) {
-                boostedBy = displayName;
-            }
-
-            const QList<QPair<QString, SocialPostImage::ImageType> > imageList = parseMediaAttachments(statusObject);
-
-            m_db.addMastodonNotification(QStringLiteral("n:%1").arg(notificationId),
-                                         displayName,
-                                         accountName,
-                                         body,
-                                         eventTimestamp,
-                                         icon,
-                                         imageList,
-                                         url,
-                                         boostedBy,
-                                         apiHost(accountId),
-                                         accountId);
-
-            ++state.newNotificationCount;
-            if (state.newNotificationCount == 1) {
-                state.singleSummary = displayName;
-                state.singleBody = body;
-                state.singleLink = url;
-                state.singleTimestamp = eventTimestamp;
-            }
+            PendingNotification pendingNotification;
+            pendingNotification.notificationId = notificationId;
+            pendingNotification.summary = displayName;
+            pendingNotification.body = body;
+            pendingNotification.link = url;
+            pendingNotification.timestamp = eventTimestamp;
+            state.pendingNotifications.insert(notificationId, pendingNotification);
         }
 
         if (notifications.size() >= NotificationsPageLimit
@@ -533,8 +456,19 @@ void MastodonNotificationsSyncAdaptor::finishedNotificationsHandler()
             return;
         }
 
-        if (state.newNotificationCount > 0) {
-            publishSystemNotification(accountId, state);
+        if (state.pendingNotifications.size() > 0) {
+            QStringList notificationIds = state.pendingNotifications.keys();
+            std::sort(notificationIds.begin(), notificationIds.end(), [](const QString &left, const QString &right) {
+                return compareNotificationIds(left, right) > 0;
+            });
+
+            QSet<QString> keepNotificationIds;
+            foreach (const QString &notificationId, notificationIds) {
+                const PendingNotification pendingNotification = state.pendingNotifications.value(notificationId);
+                publishSystemNotification(accountId, pendingNotification);
+                keepNotificationIds.insert(notificationId);
+            }
+            closeAccountNotifications(accountId, keepNotificationIds);
         }
     } else {
         qCWarning(lcSocialPlugin) << "unable to parse notifications data from request with account" << accountId
@@ -601,30 +535,76 @@ void MastodonNotificationsSyncAdaptor::finishedMarkReadHandler()
     decrementSemaphore(accountId);
 }
 
-void MastodonNotificationsSyncAdaptor::publishSystemNotification(int accountId, const PendingSyncState &state)
+void MastodonNotificationsSyncAdaptor::publishSystemNotification(int accountId,
+                                                                 const PendingNotification &notificationData)
 {
-    Notification *notification = createNotification(accountId);
-    notification->setItemCount(state.newNotificationCount);
+    Notification *notification = createNotification(accountId, notificationData.notificationId);
+    notification->setItemCount(1);
+    notification->setTimestamp(notificationData.timestamp.isValid()
+                               ? notificationData.timestamp
+                               : QDateTime::currentDateTimeUtc());
+    notification->setSummary(notificationData.summary.isEmpty()
+                             ? QStringLiteral("Mastodon")
+                             : notificationData.summary);
+    notification->setBody(notificationData.body.isEmpty()
+                          ? QStringLiteral("New notification")
+                          : notificationData.body);
+    notification->setPreviewSummary(notificationData.summary);
+    notification->setPreviewBody(notificationData.body);
 
-    QStringList openUrlArgs;
-    if (notification->itemCount() == 1) {
-        notification->setTimestamp(state.singleTimestamp.isValid() ? state.singleTimestamp : QDateTime::currentDateTimeUtc());
-        notification->setSummary(state.singleSummary.isEmpty() ? QStringLiteral("Mastodon") : state.singleSummary);
-        notification->setBody(state.singleBody.isEmpty() ? QStringLiteral("New notification") : state.singleBody);
-        openUrlArgs << (state.singleLink.isEmpty() ? apiHost(accountId) + QStringLiteral("/notifications") : state.singleLink);
-    } else {
-        notification->setTimestamp(QDateTime::currentDateTimeUtc());
-        notification->setSummary(QStringLiteral("Mastodon"));
-        notification->setBody(QStringLiteral("You have %1 new notifications").arg(notification->itemCount()));
-        openUrlArgs << apiHost(accountId) + QStringLiteral("/notifications");
-    }
-
-    notification->setProperty(LastReadIdProperty, state.maxNotificationId);
+    const QString openUrl = notificationData.link.isEmpty()
+            ? apiHost(accountId) + QStringLiteral("/notifications")
+            : notificationData.link;
+    notification->setProperty(LastReadIdProperty, notificationData.notificationId);
     notification->setUrgency(Notification::Low);
-    notification->setRemoteAction(OPEN_BROWSER_ACTION(openUrlArgs));
+    notification->setRemoteAction(OPEN_BROWSER_ACTION(QStringList() << openUrl));
     notification->publish();
     if (notification->replacesId() == 0) {
-        qCWarning(lcSocialPlugin) << "failed to publish Mastodon notification";
+        qCWarning(lcSocialPlugin) << "failed to publish Mastodon notification"
+                                  << notificationData.notificationId;
+    }
+}
+
+void MastodonNotificationsSyncAdaptor::closeAccountNotifications(int accountId,
+                                                                 const QSet<QString> &keepNotificationIds)
+{
+    QStringList cachedKeys = m_notificationObjects.keys();
+    foreach (const QString &objectKey, cachedKeys) {
+        Notification *notification = m_notificationObjects.value(objectKey);
+        if (!notification
+                || notification->hintValue("x-nemo.sociald.account-id").toInt() != accountId) {
+            continue;
+        }
+
+        const QString notificationId = notification->hintValue(NotificationIdHint).toString();
+        if (!notificationId.isEmpty() && keepNotificationIds.contains(notificationId)) {
+            continue;
+        }
+
+        notification->close();
+        m_notificationObjects.remove(objectKey);
+        notification->deleteLater();
+    }
+
+    QList<QObject *> notifications = Notification::notifications();
+    foreach (QObject *object, notifications) {
+        Notification *notification = qobject_cast<Notification *>(object);
+        if (!notification) {
+            delete object;
+            continue;
+        }
+
+        if (notification->category() == QLatin1String(NotificationCategory)
+                && notification->hintValue("x-nemo.sociald.account-id").toInt() == accountId) {
+            const QString notificationId = notification->hintValue(NotificationIdHint).toString();
+            if (notificationId.isEmpty() || !keepNotificationIds.contains(notificationId)) {
+                notification->close();
+            }
+        }
+
+        if (notification->parent() != this) {
+            delete notification;
+        }
     }
 }
 
@@ -662,30 +642,42 @@ void MastodonNotificationsSyncAdaptor::markReadFromNotification(Notification *no
     requestMarkRead(accountId, accessToken, lastReadId);
 }
 
-Notification *MastodonNotificationsSyncAdaptor::createNotification(int accountId)
+Notification *MastodonNotificationsSyncAdaptor::createNotification(int accountId, const QString &notificationId)
 {
-    Notification *notification = findNotification(accountId);
+    const QString objectKey = notificationObjectKey(accountId, notificationId);
+    Notification *notification = m_notificationObjects.value(objectKey);
+    if (!notification) {
+        notification = findNotification(accountId, notificationId);
+    }
     if (!notification) {
         notification = new Notification(this);
-        notification->setAppName(QStringLiteral("Mastodon"));
-        notification->setAppIcon(QStringLiteral("icon-l-mastodon"));
-        notification->setHintValue("x-nemo.sociald.account-id", accountId);
-        notification->setHintValue("x-nemo-feedback", QStringLiteral("social"));
-        notification->setCategory(QLatin1String(NotificationCategory));
+    } else if (notification->parent() != this) {
+        notification->setParent(this);
     }
+
+    notification->setAppName(QStringLiteral("Mastodon"));
+    notification->setAppIcon(QStringLiteral("icon-l-mastodon"));
+    notification->setHintValue("x-nemo.sociald.account-id", accountId);
+    notification->setHintValue(NotificationIdHint, notificationId);
+    notification->setHintValue("x-nemo-feedback", QStringLiteral("social"));
+    notification->setCategory(QLatin1String(NotificationCategory));
+
     connect(notification, SIGNAL(closed(uint)), this, SLOT(notificationClosedWithReason(uint)), Qt::UniqueConnection);
+    m_notificationObjects.insert(objectKey, notification);
 
     return notification;
 }
 
-Notification *MastodonNotificationsSyncAdaptor::findNotification(int accountId)
+Notification *MastodonNotificationsSyncAdaptor::findNotification(int accountId, const QString &notificationId)
 {
     Notification *notification = 0;
     QList<QObject *> notifications = Notification::notifications();
     foreach (QObject *object, notifications) {
-        Notification *castedNotification = static_cast<Notification *>(object);
-        if (castedNotification->category() == QLatin1String(NotificationCategory)
-                && castedNotification->hintValue("x-nemo.sociald.account-id").toInt() == accountId) {
+        Notification *castedNotification = qobject_cast<Notification *>(object);
+        if (castedNotification
+                && castedNotification->category() == QLatin1String(NotificationCategory)
+                && castedNotification->hintValue("x-nemo.sociald.account-id").toInt() == accountId
+                && castedNotification->hintValue(NotificationIdHint).toString() == notificationId) {
             notification = castedNotification;
             break;
         }

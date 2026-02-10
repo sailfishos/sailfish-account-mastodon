@@ -59,7 +59,6 @@ private Q_SLOTS:
     void signOnResponse(const SignOn::SessionData &responseData);
 
 private:
-    static QString normalizeApiHost(const QString &rawHost);
     void setCredentialsNeedUpdate(Accounts::Account *account);
     void signIn(Accounts::Account *account);
 

@@ -1,6 +1,7 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <!DOCTYPE provider>
 <provider version="1.0" id="mastodon">
+    <translations>/usr/share/translations/settings-accounts-mastodon</translations>
     <name>Mastodon</name>
     <description>Mastodon social network</description>
     <icon>image://theme/icon-l-mastodon</icon>

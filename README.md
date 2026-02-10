@@ -6,11 +6,16 @@ Sailfish OS account integration for Mastodon.
 
 ### `common/`
 - Shared C++ library code used by multiple plugins.
-- Includes socialcache-backed databases for Mastodon posts and notifications.
+- Includes socialcache-backed storage for Mastodon posts and shared Mastodon auth helpers.
 
 ### `settings/`
 - Sailfish Accounts provider, service definitions, and account UI.
 - OAuth2 (`web_server`) account flow with per-instance Mastodon app registration.
+- Translations:
+  - QML translation-loader module at `/usr/lib*/qt5/qml/com/jolla/settings/accounts/mastodon/` loads `settings-accounts-mastodon` catalogs for `qsTrId` strings.
+  - Engineering English catalog: `/usr/share/translations/settings-accounts-mastodon_eng_en.qm`
+  - Translation source catalog: `/usr/share/translations/source/settings-accounts-mastodon.ts`
+  - Provider/service metadata uses `<translations>/usr/share/translations/settings-accounts-mastodon</translations>` for metadata string translation paths.
 - Services:
   - `mastodon-microblog`: sync service for posts and notifications.
   - `mastodon-sharing`: Transfer Engine sharing service.
@@ -43,8 +48,11 @@ Sailfish OS account integration for Mastodon.
   - `buteo-sync-plugin-mastodon-notifications`
   - `eventsview-extensions-mastodon`
   - `transferengine-plugin-mastodon`
-- Main package requires all feature subpackages.
+  - `sailfish-account-mastodon-ts-devel`
+- Main package requires runtime feature subpackages; `sailfish-account-mastodon-ts-devel` is optional.
 - `%qmake5_install` already installs icon outputs from the `icons/` subproject; avoid a second explicit `icons` `make install` in `%install`.
+- Translation source `.ts` files are packaged in `sailfish-account-mastodon-ts-devel` (runtime packages ship `.qm` only).
+- Runtime package ships the Mastodon settings translation-loader QML plugin under `%{_libdir}/qt5/qml/com/jolla/settings/accounts/mastodon/`.
 
 ### Root project
 - `sailfish-account-mastodon.pro` ties subprojects together.
@@ -54,6 +62,7 @@ Sailfish OS account integration for Mastodon.
 - Events view shows Mastodon posts (not notification entries).
 - System notifications are produced by `buteo-sync-plugin-mastodon-notifications`.
 - Notifications sync fetches unread items using Mastodon markers (`last_read_id`).
+- Each unread Mastodon notification is published as a separate Sailfish system notification.
 - Dismissing the Sailfish notification marks those items as read on Mastodon via markers API.
 - Notification template profile dispatches per-account sync profiles on schedule (default every 30 minutes), not only at boot.
 

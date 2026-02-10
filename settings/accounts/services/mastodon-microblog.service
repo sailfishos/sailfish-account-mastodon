@@ -1,6 +1,7 @@
 <?xml version="1.0" encoding="UTF-8" ?>
 <service id="mastodon-microblog">
     <type>microblogging</type>
+    <translations>/usr/share/translations/settings-accounts-mastodon</translations>
     <name>Posts</name>
     <icon>image://theme/icon-l-mastodon</icon>
     <provider>mastodon</provider>

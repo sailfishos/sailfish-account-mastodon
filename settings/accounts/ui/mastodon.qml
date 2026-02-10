@@ -2,6 +2,7 @@ import QtQuick 2.0
 import Sailfish.Silica 1.0
 import Sailfish.Accounts 1.0
 import com.jolla.settings.accounts 1.0
+import com.jolla.settings.accounts.mastodon 1.0
 
 AccountCreationAgent {
     id: root
@@ -41,6 +42,14 @@ AccountCreationAgent {
 
     function _displayName(apiHost) {
         return oauthHost(apiHost)
+    }
+
+    function _fallbackDisplayName(apiHost) {
+        var display = _displayName(apiHost)
+        if (display.length > 0) {
+            return display
+        }
+        return _displayName(defaultApiHost)
     }
 
     function _showRegistrationError(message, busyPage) {
@@ -290,10 +299,12 @@ AccountCreationAgent {
                         ? newAccount.defaultCredentialsUserName.toString().trim()
                         : ""
                 var providerDisplayName = root._displayName(apiHost)
-                if (credentialsUserName.length > 0) {
-                    newAccount.displayName = credentialsUserName
-                } else if (providerDisplayName.length > 0) {
-                    newAccount.displayName = providerDisplayName
+                var accountDescription = credentialsUserName.length > 0
+                        ? credentialsUserName
+                        : root._fallbackDisplayName(apiHost)
+                if (accountDescription.length > 0) {
+                    newAccount.displayName = accountDescription
+                    newAccount.setConfigurationValue("", "description", accountDescription)
                 }
 
                 newAccount.setConfigurationValue("", "api/Host", apiHost)

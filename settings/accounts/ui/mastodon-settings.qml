@@ -13,7 +13,18 @@ AccountSettingsAgent {
         if (credentialsUserName.length > 0) {
             return credentialsUserName
         }
-        return account.displayName
+        var displayName = account.displayName ? account.displayName.toString().trim() : ""
+        if (displayName.length > 0) {
+            return displayName
+        }
+        var apiHost = account.configurationValues("")["api/Host"]
+        var host = apiHost ? apiHost.toString().trim() : ""
+        host = host.replace(/^https?:\/\//i, "")
+        var pathSeparator = host.indexOf("/")
+        if (pathSeparator !== -1) {
+            host = host.substring(0, pathSeparator)
+        }
+        return host
     }
 
     Account {

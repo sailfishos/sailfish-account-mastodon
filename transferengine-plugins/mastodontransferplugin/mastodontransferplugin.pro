@@ -3,6 +3,7 @@ TARGET = $$qtLibraryTarget(mastodontransferplugin)
 CONFIG += plugin
 DEPENDPATH += .
 INCLUDEPATH += ..
+INCLUDEPATH += ../../common
 
 QT += network
 

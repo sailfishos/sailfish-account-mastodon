@@ -10,12 +10,11 @@ TARGET = mastodoncommon
 TARGET = $$qtLibraryTarget($$TARGET)
 
 HEADERS += \
-    $$PWD/mastodonpostsdatabase.h \
-    $$PWD/mastodonnotificationsdatabase.h
+    $$PWD/mastodonauthutils.h \
+    $$PWD/mastodonpostsdatabase.h
 
 SOURCES += \
-    $$PWD/mastodonpostsdatabase.cpp \
-    $$PWD/mastodonnotificationsdatabase.cpp
+    $$PWD/mastodonpostsdatabase.cpp
 
 TARGETPATH = $$[QT_INSTALL_LIBS]
 target.path = $$TARGETPATH

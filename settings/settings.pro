@@ -1,2 +1,4 @@
 TEMPLATE = subdirs
-SUBDIRS += accounts
+SUBDIRS += \
+    accounts \
+    accounts-translations-plugin

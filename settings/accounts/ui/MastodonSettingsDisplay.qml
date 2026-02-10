@@ -9,6 +9,16 @@ StandardAccountSettingsDisplay {
 
     settingsModified: true
 
+    function _displayNameFromApiHost(apiHost) {
+        var host = apiHost ? apiHost.toString().trim() : ""
+        host = host.replace(/^https?:\/\//i, "")
+        var pathSeparator = host.indexOf("/")
+        if (pathSeparator !== -1) {
+            host = host.substring(0, pathSeparator)
+        }
+        return host
+    }
+
     onAboutToSaveAccount: {
         settingsLoader.updateAllSyncProfiles()
 
@@ -33,6 +43,11 @@ StandardAccountSettingsDisplay {
                     : ""
             if (credentialsUserName.length > 0 && root.account.displayName !== credentialsUserName) {
                 root.account.displayName = credentialsUserName
+            } else if ((!root.account.displayName || root.account.displayName.toString().trim().length === 0)) {
+                var fallback = _displayNameFromApiHost(root.account.configurationValues("")["api/Host"])
+                if (fallback.length > 0) {
+                    root.account.displayName = fallback
+                }
             }
 
             var autoSync = root.account.configurationValues("")["FeedViewAutoSync"]

@@ -112,6 +112,7 @@ fi
 %{_datadir}/accounts/ui/mastodon.qml
 %{_datadir}/accounts/ui/mastodon-settings.qml
 %{_datadir}/accounts/ui/mastodon-update.qml
+%{_libdir}/qt5/qml/com/jolla/settings/accounts/mastodon/*
 %{_datadir}/translations/settings-accounts-mastodon_eng_en.qm
 %{_datadir}/themes/sailfish-default/silica/*/icons/icon-l-mastodon.png
 

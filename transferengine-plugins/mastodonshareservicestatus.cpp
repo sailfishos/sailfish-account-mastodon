@@ -1,4 +1,5 @@
 #include "mastodonshareservicestatus.h"
+#include "mastodonauthutils.h"
 
 #include <Accounts/Account>
 #include <Accounts/AccountService>
@@ -20,33 +21,6 @@ MastodonShareServiceStatus::MastodonShareServiceStatus(QObject *parent)
     , m_accountManager(new Accounts::Manager(this))
     , m_serviceName(QStringLiteral("mastodon-sharing"))
 {
-}
-
-QString MastodonShareServiceStatus::normalizeApiHost(const QString &rawHost)
-{
-    QString host = rawHost.trimmed();
-    if (host.isEmpty()) {
-        host = QStringLiteral("https://mastodon.social");
-    }
-
-    if (!host.startsWith(QLatin1String("https://"))
-            && !host.startsWith(QLatin1String("http://"))) {
-        host.prepend(QStringLiteral("https://"));
-    }
-
-    QUrl url(host);
-    if (!url.isValid() || url.host().isEmpty()) {
-        return QStringLiteral("https://mastodon.social");
-    }
-
-    QString normalized = QString::fromLatin1(url.toEncoded(QUrl::RemovePath
-                                                            | QUrl::RemoveQuery
-                                                            | QUrl::RemoveFragment));
-    if (normalized.endsWith(QLatin1Char('/'))) {
-        normalized.chop(1);
-    }
-
-    return normalized;
 }
 
 void MastodonShareServiceStatus::signIn(int accountId)
@@ -93,66 +67,7 @@ void MastodonShareServiceStatus::signIn(int accountId)
 
     QVariantMap signonSessionData = accountService.authData().parameters();
 
-    QString configuredHost = account->value(QStringLiteral("auth/oauth2/web_server/Host")).toString().trimmed();
-    if (configuredHost.isEmpty()) {
-        configuredHost = normalizeApiHost(account->value(QStringLiteral("api/Host")).toString());
-    }
-
-    if (configuredHost.startsWith(QLatin1String("https://"))) {
-        configuredHost.remove(0, 8);
-    } else if (configuredHost.startsWith(QLatin1String("http://"))) {
-        configuredHost.remove(0, 7);
-    }
-
-    const int separator = configuredHost.indexOf(QLatin1Char('/'));
-    if (separator > -1) {
-        configuredHost.truncate(separator);
-    }
-    while (configuredHost.endsWith(QLatin1Char('/'))) {
-        configuredHost.chop(1);
-    }
-
-    if (configuredHost.isEmpty()) {
-        configuredHost = QStringLiteral("mastodon.social");
-    }
-    signonSessionData.insert(QStringLiteral("Host"), configuredHost);
-
-    const QString authPath = account->value(QStringLiteral("auth/oauth2/web_server/AuthPath")).toString().trimmed();
-    if (!authPath.isEmpty()) {
-        signonSessionData.insert(QStringLiteral("AuthPath"), authPath);
-    }
-
-    const QString tokenPath = account->value(QStringLiteral("auth/oauth2/web_server/TokenPath")).toString().trimmed();
-    if (!tokenPath.isEmpty()) {
-        signonSessionData.insert(QStringLiteral("TokenPath"), tokenPath);
-    }
-
-    const QString responseType = account->value(QStringLiteral("auth/oauth2/web_server/ResponseType")).toString().trimmed();
-    if (!responseType.isEmpty()) {
-        signonSessionData.insert(QStringLiteral("ResponseType"), responseType);
-    }
-
-    const QString redirectUri = account->value(QStringLiteral("auth/oauth2/web_server/RedirectUri")).toString().trimmed();
-    if (!redirectUri.isEmpty()) {
-        signonSessionData.insert(QStringLiteral("RedirectUri"), redirectUri);
-    }
-
-    const QVariant scopeValue = account->value(QStringLiteral("auth/oauth2/web_server/Scope"));
-    if (scopeValue.isValid()) {
-        signonSessionData.insert(QStringLiteral("Scope"), scopeValue);
-    }
-
-    const QString clientId = account->value(QStringLiteral("auth/oauth2/web_server/ClientId")).toString().trimmed();
-    if (!clientId.isEmpty()) {
-        signonSessionData.insert(QStringLiteral("ClientId"), clientId);
-    }
-
-    const QString clientSecret = account->value(QStringLiteral("auth/oauth2/web_server/ClientSecret")).toString().trimmed();
-    if (!clientSecret.isEmpty()) {
-        signonSessionData.insert(QStringLiteral("ClientSecret"), clientSecret);
-    }
-
-    signonSessionData.insert(QStringLiteral("UiPolicy"), SignOn::NoUserInteractionPolicy);
+    MastodonAuthUtils::addSignOnSessionParameters(account, &signonSessionData);
 
     connect(session, SIGNAL(response(SignOn::SessionData)),
             this, SLOT(signOnResponse(SignOn::SessionData)),
@@ -168,20 +83,14 @@ void MastodonShareServiceStatus::signIn(int accountId)
 
 void MastodonShareServiceStatus::signOnResponse(const SignOn::SessionData &responseData)
 {
-    QVariantMap data;
-    Q_FOREACH (const QString &key, responseData.propertyNames()) {
-        data.insert(key, responseData.getProperty(key));
-    }
+    const QVariantMap data = MastodonAuthUtils::responseDataToMap(responseData);
 
     SignOn::AuthSession *session = qobject_cast<SignOn::AuthSession *>(sender());
     Accounts::Account *account = session->property("account").value<Accounts::Account *>();
     SignOn::Identity *identity = session->property("identity").value<SignOn::Identity *>();
     const int accountId = account ? account->id() : 0;
 
-    QString accessToken = data.value(QLatin1String("AccessToken")).toString().trimmed();
-    if (accessToken.isEmpty()) {
-        accessToken = data.value(QLatin1String("access_token")).toString().trimmed();
-    }
+    QString accessToken = MastodonAuthUtils::accessToken(data);
 
     if (accountId > 0 && m_accountIdToDetailsIdx.contains(accountId)) {
         AccountDetails &accountDetails(m_accountDetails[m_accountIdToDetailsIdx[accountId]]);
@@ -308,7 +217,7 @@ void MastodonShareServiceStatus::queryStatus(QueryStatusMode mode)
             if (!m_accountIdToDetailsIdx.contains(id)) {
                 AccountDetails details;
                 details.accountId = id;
-                details.apiHost = normalizeApiHost(acc->value(QStringLiteral("api/Host")).toString());
+                details.apiHost = MastodonAuthUtils::normalizeApiHost(acc->value(QStringLiteral("api/Host")).toString());
 
                 QUrl apiUrl(details.apiHost);
                 details.providerName = apiUrl.host();

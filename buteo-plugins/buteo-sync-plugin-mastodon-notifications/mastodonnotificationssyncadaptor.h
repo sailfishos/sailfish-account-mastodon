@@ -25,10 +25,8 @@
 
 #include <QtCore/QDateTime>
 #include <QtCore/QHash>
+#include <QtCore/QSet>
 #include <QtNetwork/QNetworkReply>
-
-#include "mastodonnotificationsdatabase.h"
-#include <socialcache/socialimagesdatabase.h>
 
 class Notification;
 
@@ -48,22 +46,18 @@ protected:
     void finalize(int accountId) override;
 
 private:
+    struct PendingNotification {
+        QString notificationId;
+        QString summary;
+        QString body;
+        QString link;
+        QDateTime timestamp;
+    };
+
     struct PendingSyncState {
         QString accessToken;
         QString minReadId;
-        QString maxNotificationId;
-        int newNotificationCount;
-        QString singleSummary;
-        QString singleBody;
-        QString singleLink;
-        QDateTime singleTimestamp;
-        bool dbCleared;
-
-        PendingSyncState()
-            : newNotificationCount(0)
-            , dbCleared(false)
-        {
-        }
+        QHash<QString, PendingNotification> pendingNotifications;
     };
 
     static QString sanitizeContent(const QString &content);
@@ -76,9 +70,11 @@ private:
                               const QString &minId,
                               const QString &maxId = QString());
     void requestMarkRead(int accountId, const QString &accessToken, const QString &lastReadId);
-    void publishSystemNotification(int accountId, const PendingSyncState &state);
-    Notification *createNotification(int accountId);
-    Notification *findNotification(int accountId);
+    void publishSystemNotification(int accountId, const PendingNotification &notificationData);
+    Notification *createNotification(int accountId, const QString &notificationId);
+    Notification *findNotification(int accountId, const QString &notificationId);
+    void closeAccountNotifications(int accountId, const QSet<QString> &keepNotificationIds = QSet<QString>());
+    static QString notificationObjectKey(int accountId, const QString &notificationId);
     void markReadFromNotification(Notification *notification);
 
 private Q_SLOTS:
@@ -88,11 +84,10 @@ private Q_SLOTS:
     void notificationClosedWithReason(uint reason);
 
 private:
-    MastodonNotificationsDatabase m_db;
-    SocialImagesDatabase m_imageCacheDb;
     QHash<int, PendingSyncState> m_pendingSyncStates;
     QHash<int, QString> m_accessTokens;
     QHash<int, QString> m_lastMarkedReadIds;
+    QHash<QString, Notification *> m_notificationObjects;
 };
 
 #endif // MASTODONNOTIFICATIONSSYNCADAPTOR_H

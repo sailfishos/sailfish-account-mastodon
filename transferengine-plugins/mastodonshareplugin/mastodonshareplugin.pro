@@ -3,6 +3,7 @@ TARGET = $$qtLibraryTarget(mastodonshareplugin)
 CONFIG += plugin
 DEPENDPATH += .
 INCLUDEPATH += ..
+INCLUDEPATH += ../../common
 
 CONFIG += link_pkgconfig
 PKGCONFIG += nemotransferengine-qt5 accounts-qt5 sailfishaccounts libsignon-qt5
