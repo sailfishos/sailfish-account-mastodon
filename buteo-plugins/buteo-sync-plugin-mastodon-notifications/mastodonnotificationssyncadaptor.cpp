@@ -555,9 +555,19 @@ void MastodonNotificationsSyncAdaptor::publishSystemNotification(int accountId,
     const QString openUrl = notificationData.link.isEmpty()
             ? apiHost(accountId) + QStringLiteral("/notifications")
             : notificationData.link;
+    const QUrl parsedOpenUrl(openUrl);
+    const QString fallbackUrl = apiHost(accountId) + QStringLiteral("/notifications");
+    const QString safeOpenUrl = parsedOpenUrl.isValid()
+            && !parsedOpenUrl.scheme().isEmpty()
+            && !parsedOpenUrl.host().isEmpty()
+            ? openUrl
+            : fallbackUrl;
+    QStringList openUrlArgs;
+    openUrlArgs << safeOpenUrl;
+
     notification->setProperty(LastReadIdProperty, notificationData.notificationId);
     notification->setUrgency(Notification::Low);
-    notification->setRemoteAction(OPEN_BROWSER_ACTION(QStringList() << openUrl));
+    notification->setRemoteAction(OPEN_BROWSER_ACTION(openUrlArgs));
     notification->publish();
     if (notification->replacesId() == 0) {
         qCWarning(lcSocialPlugin) << "failed to publish Mastodon notification"

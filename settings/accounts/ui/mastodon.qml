@@ -126,13 +126,79 @@ AccountCreationAgent {
         xhr.send(postData.join("&"))
     }
 
-    function _handleAccountCreated(accountId, context) {
+    function _extractAccountName(responseData) {
+        if (!responseData) {
+            return ""
+        }
+
+        var candidates = [
+            "AccountUsername",
+            "UserName",
+            "user_name",
+            "acct",
+            "username",
+            "preferred_username",
+            "login",
+            "ScreenName"
+        ]
+        for (var i = 0; i < candidates.length; ++i) {
+            var value = responseData[candidates[i]]
+            if (value) {
+                var userName = value.toString().trim()
+                if (userName.length > 0) {
+                    return userName
+                }
+            }
+        }
+
+        return ""
+    }
+
+    function _formatMastodonAccountId(accountName, apiHost) {
+        var value = accountName ? accountName.toString().trim() : ""
+        if (value.length === 0) {
+            return ""
+        }
+
+        value = value.replace(/^@+/, "")
+        if (value.indexOf("@") !== -1) {
+            return "@" + value
+        }
+
+        var host = oauthHost(apiHost)
+        if (host.length === 0) {
+            return ""
+        }
+
+        return "@" + value + "@" + host
+    }
+
+    function _isMastodonAccountId(value) {
+        var text = value ? value.toString().trim() : ""
+        return /^@[^@]+@[^@]+$/.test(text)
+    }
+
+    function _extractAccessToken(responseData) {
+        if (!responseData) {
+            return ""
+        }
+
+        var token = responseData["AccessToken"]
+        if (!token || token.toString().trim().length === 0) {
+            token = responseData["access_token"]
+        }
+        return token ? token.toString().trim() : ""
+    }
+
+    function _handleAccountCreated(accountId, context, responseData) {
         var props = {
             "accountId": accountId,
             "apiHost": context.apiHost,
             "oauthHost": context.oauthHost,
             "clientId": context.clientId,
-            "clientSecret": context.clientSecret
+            "clientSecret": context.clientSecret,
+            "accessToken": _extractAccessToken(responseData),
+            "accountDescription": _formatMastodonAccountId(_extractAccountName(responseData), context.apiHost)
         }
         _accountSetup = accountSetupComponent.createObject(root, props)
         _accountSetup.done.connect(function() {
@@ -251,7 +317,7 @@ AccountCreationAgent {
             }
 
             onAccountCreated: {
-                root._handleAccountCreated(accountId, context)
+                root._handleAccountCreated(accountId, context, responseData)
             }
 
             onAccountCreationError: {
@@ -270,6 +336,8 @@ AccountCreationAgent {
             property string oauthHost
             property string clientId
             property string clientSecret
+            property string accessToken
+            property string accountDescription
             property bool hasConfigured
 
             signal done()
@@ -295,20 +363,28 @@ AccountCreationAgent {
                 hasConfigured = true
 
                 var services = ["mastodon-microblog", "mastodon-sharing"]
-                var credentialsUserName = newAccount.defaultCredentialsUserName
-                        ? newAccount.defaultCredentialsUserName.toString().trim()
+                var providerDisplayName = root.accountProvider && root.accountProvider.displayName
+                        ? root.accountProvider.displayName.toString().trim()
                         : ""
-                var providerDisplayName = root._displayName(apiHost)
-                var accountDescription = credentialsUserName.length > 0
-                        ? credentialsUserName
-                        : root._fallbackDisplayName(apiHost)
-                if (accountDescription.length > 0) {
-                    newAccount.displayName = accountDescription
-                    newAccount.setConfigurationValue("", "description", accountDescription)
+                if (providerDisplayName.length === 0) {
+                    providerDisplayName = "Mastodon"
                 }
+                newAccount.displayName = providerDisplayName
 
                 newAccount.setConfigurationValue("", "api/Host", apiHost)
                 newAccount.setConfigurationValue("", "FeedViewAutoSync", true)
+                if (accountDescription.length > 0) {
+                    newAccount.setConfigurationValue("", "description", accountDescription)
+                    if (root._isMastodonAccountId(accountDescription)) {
+                        newAccount.setConfigurationValue("", "default_credentials_username", accountDescription)
+                    }
+                } else {
+                    var hostDisplayName = root._fallbackDisplayName(apiHost)
+                    if (hostDisplayName.length > 0) {
+                        newAccount.setConfigurationValue("", "description", hostDisplayName)
+                    }
+                }
+
                 for (var i = 0; i < services.length; ++i) {
                     var service = services[i]
                     newAccount.setConfigurationValue(service, "api/Host", apiHost)
@@ -326,7 +402,38 @@ AccountCreationAgent {
                     newAccount.enableWithService(services[j])
                 }
 
-                newAccount.sync()
+                if (accountDescription.length > 0 || accessToken.length === 0) {
+                    newAccount.sync()
+                    return
+                }
+
+                var xhr = new XMLHttpRequest()
+                xhr.onreadystatechange = function() {
+                    if (xhr.readyState !== XMLHttpRequest.DONE) {
+                        return
+                    }
+
+                    if (xhr.status >= 200 && xhr.status < 300) {
+                        try {
+                            var response = JSON.parse(xhr.responseText)
+                            var fetchedDescription = root._formatMastodonAccountId(root._extractAccountName(response), apiHost)
+                            if (fetchedDescription.length > 0) {
+                                accountDescription = fetchedDescription
+                                newAccount.setConfigurationValue("", "description", fetchedDescription)
+                                if (root._isMastodonAccountId(fetchedDescription)) {
+                                    newAccount.setConfigurationValue("", "default_credentials_username", fetchedDescription)
+                                }
+                            }
+                        } catch (err) {
+                        }
+                    }
+
+                    newAccount.sync()
+                }
+
+                xhr.open("GET", apiHost + "/api/v1/accounts/verify_credentials")
+                xhr.setRequestHeader("Authorization", "Bearer " + accessToken)
+                xhr.send()
             }
         }
     }

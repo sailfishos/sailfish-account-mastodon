@@ -9,18 +9,59 @@ StandardAccountSettingsDisplay {
 
     settingsModified: true
 
-    function _displayNameFromApiHost(apiHost) {
-        var host = apiHost ? apiHost.toString().trim() : ""
-        host = host.replace(/^https?:\/\//i, "")
-        var pathSeparator = host.indexOf("/")
-        if (pathSeparator !== -1) {
-            host = host.substring(0, pathSeparator)
+    function refreshDescriptionEditor() {
+        var description = root.account.configurationValues("")["description"]
+        var descriptionValue = description ? description.toString().trim() : ""
+        var credentialsUserName = root.account.defaultCredentialsUserName
+                ? root.account.defaultCredentialsUserName.toString().trim()
+                : ""
+        if (descriptionValue.length > 0 && credentialsUserName !== descriptionValue) {
+            root.account.setConfigurationValue("", "default_credentials_username", descriptionValue)
         }
-        return host
+
+        // Reuse the standard "Description" field as the account handle editor.
+        if (descriptionValue.length > 0) {
+            root.account.displayName = descriptionValue
+        } else if (credentialsUserName.length > 0) {
+            root.account.displayName = credentialsUserName
+        } else {
+            root.account.displayName = ""
+        }
+    }
+
+    function _providerDisplayName() {
+        var providerDisplayName = root.accountProvider && root.accountProvider.displayName
+                ? root.accountProvider.displayName.toString().trim()
+                : ""
+        return providerDisplayName.length > 0 ? providerDisplayName : "Mastodon"
     }
 
     onAboutToSaveAccount: {
         settingsLoader.updateAllSyncProfiles()
+
+        var editedDescription = root.account.displayName
+                ? root.account.displayName.toString().trim()
+                : ""
+        var providerDisplayName = _providerDisplayName()
+        if (editedDescription === providerDisplayName) {
+            editedDescription = ""
+        }
+
+        var storedDescriptionValue = root.account.configurationValues("")["description"]
+        var storedDescription = storedDescriptionValue ? storedDescriptionValue.toString().trim() : ""
+        if (storedDescription !== editedDescription) {
+            root.account.setConfigurationValue("", "description", editedDescription)
+        }
+
+        var storedCredentialsUserName = root.account.defaultCredentialsUserName
+                ? root.account.defaultCredentialsUserName.toString().trim()
+                : ""
+        if (storedCredentialsUserName !== editedDescription) {
+            root.account.setConfigurationValue("", "default_credentials_username", editedDescription)
+        }
+
+        // Keep account list title fixed to provider name.
+        root.account.displayName = providerDisplayName
 
         if (eventsSyncSwitch.checked !== root.account.configurationValues("")["FeedViewAutoSync"]) {
             root.account.setConfigurationValue("", "FeedViewAutoSync", eventsSyncSwitch.checked)
@@ -38,17 +79,7 @@ StandardAccountSettingsDisplay {
             syncServicesRepeater.model = syncServices
             otherServicesDisplay.serviceModel = otherServices
 
-            var credentialsUserName = root.account.defaultCredentialsUserName
-                    ? root.account.defaultCredentialsUserName.toString().trim()
-                    : ""
-            if (credentialsUserName.length > 0 && root.account.displayName !== credentialsUserName) {
-                root.account.displayName = credentialsUserName
-            } else if ((!root.account.displayName || root.account.displayName.toString().trim().length === 0)) {
-                var fallback = _displayNameFromApiHost(root.account.configurationValues("")["api/Host"])
-                if (fallback.length > 0) {
-                    root.account.displayName = fallback
-                }
-            }
+            refreshDescriptionEditor()
 
             var autoSync = root.account.configurationValues("")["FeedViewAutoSync"]
             var isNewAccount = root.autoEnableAccount

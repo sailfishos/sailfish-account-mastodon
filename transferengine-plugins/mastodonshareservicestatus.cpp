@@ -201,53 +201,57 @@ void MastodonShareServiceStatus::queryStatus(QueryStatusMode mode)
             }
         }
 
-        if (acc->enabled() && service.isValid() && serviceFound) {
-            if (acc->value(QStringLiteral("CredentialsNeedUpdate")).toBool()) {
-                qWarning() << Q_FUNC_INFO << "Credentials need update for account id:" << id;
-                continue;
-            }
-
-            acc->selectService(service);
-            if (acc->value(QStringLiteral("CredentialsNeedUpdate")).toBool()) {
-                qWarning() << Q_FUNC_INFO << "Credentials need update for account id:" << id;
-                acc->selectService(Accounts::Service());
-                continue;
-            }
-
-            if (!m_accountIdToDetailsIdx.contains(id)) {
-                AccountDetails details;
-                details.accountId = id;
-                details.apiHost = MastodonAuthUtils::normalizeApiHost(acc->value(QStringLiteral("api/Host")).toString());
-
-                QUrl apiUrl(details.apiHost);
-                details.providerName = apiUrl.host();
-                if (details.providerName.isEmpty()) {
-                    details.providerName = details.apiHost;
-                    if (details.providerName.startsWith(QLatin1String("https://"))) {
-                        details.providerName.remove(0, 8);
-                    } else if (details.providerName.startsWith(QLatin1String("http://"))) {
-                        details.providerName.remove(0, 7);
-                    }
-                    const int separator = details.providerName.indexOf(QLatin1Char('/'));
-                    if (separator > 0) {
-                        details.providerName.truncate(separator);
-                    }
-                }
-
-                details.displayName = acc->displayName();
-
-                m_accountIdToDetailsIdx.insert(id, m_accountDetails.size());
-                m_accountDetails.append(details);
-            }
-
-            if (mode == SignInMode) {
-                signInActive = true;
-                m_accountDetailsState.insert(id, Waiting);
-                signIn(id);
-            }
-
-            acc->selectService(Accounts::Service());
+        if (!service.isValid() || !serviceFound) {
+            continue;
         }
+
+        const bool accountEnabled = acc->enabled();
+        acc->selectService(service);
+        const bool shareServiceEnabled = acc->enabled();
+        if (!accountEnabled || !shareServiceEnabled) {
+            acc->selectService(Accounts::Service());
+            continue;
+        }
+
+        if (acc->value(QStringLiteral("CredentialsNeedUpdate")).toBool()) {
+            qWarning() << Q_FUNC_INFO << "Credentials need update for account id:" << id;
+            acc->selectService(Accounts::Service());
+            continue;
+        }
+
+        if (!m_accountIdToDetailsIdx.contains(id)) {
+            AccountDetails details;
+            details.accountId = id;
+            details.apiHost = MastodonAuthUtils::normalizeApiHost(acc->value(QStringLiteral("api/Host")).toString());
+
+            QUrl apiUrl(details.apiHost);
+            details.providerName = apiUrl.host();
+            if (details.providerName.isEmpty()) {
+                details.providerName = details.apiHost;
+                if (details.providerName.startsWith(QLatin1String("https://"))) {
+                    details.providerName.remove(0, 8);
+                } else if (details.providerName.startsWith(QLatin1String("http://"))) {
+                    details.providerName.remove(0, 7);
+                }
+                const int separator = details.providerName.indexOf(QLatin1Char('/'));
+                if (separator > 0) {
+                    details.providerName.truncate(separator);
+                }
+            }
+
+            details.displayName = acc->displayName();
+
+            m_accountIdToDetailsIdx.insert(id, m_accountDetails.size());
+            m_accountDetails.append(details);
+        }
+
+        if (mode == SignInMode) {
+            signInActive = true;
+            m_accountDetailsState.insert(id, Waiting);
+            signIn(id);
+        }
+
+        acc->selectService(Accounts::Service());
     }
 
     if (!signInActive) {

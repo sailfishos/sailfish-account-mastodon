@@ -7,15 +7,10 @@ AccountSettingsAgent {
     id: root
 
     property string accountSubtitle: {
-        var credentialsUserName = account.defaultCredentialsUserName
-                ? account.defaultCredentialsUserName.toString().trim()
-                : ""
-        if (credentialsUserName.length > 0) {
-            return credentialsUserName
-        }
-        var displayName = account.displayName ? account.displayName.toString().trim() : ""
-        if (displayName.length > 0) {
-            return displayName
+        var description = account.configurationValues("")["description"]
+        var detail = description ? description.toString().trim() : ""
+        if (detail.length > 0) {
+            return detail
         }
         var apiHost = account.configurationValues("")["api/Host"]
         var host = apiHost ? apiHost.toString().trim() : ""
@@ -23,6 +18,13 @@ AccountSettingsAgent {
         var pathSeparator = host.indexOf("/")
         if (pathSeparator !== -1) {
             host = host.substring(0, pathSeparator)
+        }
+        if (host.length > 0) {
+            return host
+        }
+        var displayName = account.displayName ? account.displayName.toString().trim() : ""
+        if (displayName.length > 0) {
+            return displayName
         }
         return host
     }
@@ -33,6 +35,12 @@ AccountSettingsAgent {
     }
 
     initialPage: Page {
+        onStatusChanged: {
+            if (status === PageStatus.Active && !credentialsUpdater.running) {
+                settingsDisplay.refreshDescriptionEditor()
+            }
+        }
+
         onPageContainerChanged: {
             if (pageContainer == null && !credentialsUpdater.running) {
                 root.delayDeletion = true
