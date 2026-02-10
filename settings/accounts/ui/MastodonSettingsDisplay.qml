@@ -102,6 +102,9 @@ StandardAccountSettingsDisplay {
             TextSwitch {
                 checked: model.enabled
                 text: model.displayName
+                description: model.serviceName === "mastodon-microblog"
+                        ? "Show Mastodon posts in the Events view."
+                        : ""
                 visible: text.length > 0
                 onCheckedChanged: {
                     if (checked) {
