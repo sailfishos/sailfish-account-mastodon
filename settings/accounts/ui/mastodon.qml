@@ -14,6 +14,7 @@ AccountCreationAgent {
     property bool _registering
 
     readonly property string callbackUri: "http://ipv4.jolla.com/online/status.html"
+    readonly property string defaultApiHost: "https://mastodon.social"
 
     function normalizeApiHost(rawHost) {
         var host = rawHost ? rawHost.trim() : ""
@@ -148,12 +149,12 @@ AccountCreationAgent {
 
         property string normalizedHost: root.normalizeApiHost(instanceField.text)
 
-        canAccept: !root._registering && normalizedHost.length > 0
+        canAccept: !root._registering
         acceptDestinationAction: PageStackAction.Push
         acceptDestination: busyComponent
 
         onAccepted: {
-            root._pendingApiHost = normalizedHost
+            root._pendingApiHost = normalizedHost.length > 0 ? normalizedHost : root.defaultApiHost
         }
 
         DialogHeader {
