@@ -1,6 +1,6 @@
 /****************************************************************************
  **
- ** Copyright (C) 2014 Jolla Ltd.
+ ** Copyright (C) 2013-2026 Jolla Ltd.
  ** Contact: Chris Adams <chris.adams@jolla.com>
  **
  ** This program/library is free software; you can redistribute it and/or
@@ -149,11 +149,16 @@ bool SocialdButeoPlugin::uninit()
 
 bool SocialdButeoPlugin::startSync()
 {
+    if (!m_socialNetworkSyncAdaptor || !m_socialNetworkSyncAdaptor->enabled()) {
+        qCDebug(lcSocialPlugin) << "no enabled" << m_socialServiceName << "sync adaptor for" << m_dataTypeName;
+        return false;
+    }
+
     // if the profile being triggered is the template profile, then we
     // need to ensure that the appropriate per-account profiles exist.
     if (m_profileAccountId == 0) {
         QList<Buteo::SyncProfile*> perAccountProfiles = ensurePerAccountSyncProfilesExist();
-        m_socialNetworkSyncAdaptor->setAccountSyncProfile(NULL);
+        m_socialNetworkSyncAdaptor->setAccountSyncProfile(nullptr);
 
         // we need to trigger sync with each profile separately,
         // or (due to scheduling/etc) another plugin instance might
@@ -165,25 +170,37 @@ bool SocialdButeoPlugin::startSync()
             message.setArguments(QVariantList() << perAccountProfile->name());
             QDBusConnection::sessionBus().asyncCall(message);
         }
-    } else {
-        m_socialNetworkSyncAdaptor->setAccountSyncProfile(profile().clone());
+        qDeleteAll(perAccountProfiles);
+
+        // This template profile only dispatches account-specific sync profiles.
+        // Those child sync runs report their own individual results.
+        updateResults(Buteo::SyncResults(QDateTime::currentDateTime(),
+                                         Buteo::SyncResults::SYNC_RESULT_SUCCESS,
+                                         Buteo::SyncResults::NO_ERROR));
+        emit success(getProfileName(), QString("%1 update dispatched").arg(getProfileName()));
+        return true;
     }
 
-    // now perform sync.  Note that for the template profile case, this will
-    // result in a purge operation occurring (checking for removed accounts and
-    // purging any synced data associated with those accounts).
-    if (m_socialNetworkSyncAdaptor && m_socialNetworkSyncAdaptor->enabled()) {
-        if (m_socialNetworkSyncAdaptor->status() == SocialNetworkSyncAdaptor::Inactive) {
-            qCDebug(lcSocialPlugin) << "performing sync of" << m_dataTypeName << "from" << m_socialServiceName
-                                    << "for account" << m_profileAccountId;
-            m_socialNetworkSyncAdaptor->sync(m_dataTypeName, m_profileAccountId);
-            return true;
-        } else {
-            qCDebug(lcSocialPlugin) << m_socialServiceName << "sync adaptor for" << m_dataTypeName
-                                    << "is still busy with last sync of account" << m_profileAccountId;
-        }
+    Buteo::SyncProfile *accountSyncProfile = profile().clone();
+    if (accountSyncProfile
+            && m_dataTypeName == SocialNetworkSyncAdaptor::dataTypeName(SocialNetworkSyncAdaptor::Notifications)) {
+        accountSyncProfile->setEnabled(true);
+        Buteo::SyncSchedule schedule = accountSyncProfile->syncSchedule();
+        schedule.setScheduleEnabled(true);
+        accountSyncProfile->setSyncSchedule(schedule);
+        m_profileManager.updateProfile(*accountSyncProfile);
+    }
+    m_socialNetworkSyncAdaptor->setAccountSyncProfile(accountSyncProfile);
+
+    // Now perform sync for the account-specific profile.
+    if (m_socialNetworkSyncAdaptor->status() == SocialNetworkSyncAdaptor::Inactive) {
+        qCDebug(lcSocialPlugin) << "performing sync of" << m_dataTypeName << "from" << m_socialServiceName
+                                << "for account" << m_profileAccountId;
+        m_socialNetworkSyncAdaptor->sync(m_dataTypeName, m_profileAccountId);
+        return true;
     } else {
-        qCDebug(lcSocialPlugin) << "no enabled" << m_socialServiceName << "sync adaptor for" << m_dataTypeName;
+        qCDebug(lcSocialPlugin) << m_socialServiceName << "sync adaptor for" << m_dataTypeName
+                                << "is still busy with last sync of account" << m_profileAccountId;
     }
     return false;
 }

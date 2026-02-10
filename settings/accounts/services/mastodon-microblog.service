@@ -2,11 +2,11 @@
 <service id="mastodon-microblog">
     <type>microblogging</type>
     <name>Posts</name>
-    <icon>image://theme/icon-m-events</icon>
+    <icon>image://theme/icon-l-mastodon</icon>
     <provider>mastodon</provider>
 
     <template>
-        <setting name="sync_profile_templates" type="as">["mastodon.Posts"]</setting>
+        <setting name="sync_profile_templates" type="as">["mastodon.Posts", "mastodon.Notifications"]</setting>
         <group name="auth">
             <setting name="method">oauth2</setting>
             <setting name="mechanism">web_server</setting>

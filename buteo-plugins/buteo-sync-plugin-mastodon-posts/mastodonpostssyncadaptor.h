@@ -1,6 +1,6 @@
 /****************************************************************************
  **
- ** Copyright (C) 2026 Open Mobile Platform LLC.
+ ** Copyright (C) 2013-2026 Jolla Ltd.
  **
  ** This program/library is free software; you can redistribute it and/or
  ** modify it under the terms of the GNU Lesser General Public License

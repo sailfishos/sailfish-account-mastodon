@@ -30,7 +30,7 @@ QString MastodonUploader::displayName() const
 
 QUrl MastodonUploader::serviceIcon() const
 {
-    return QUrl(QStringLiteral("image://theme/graphic-s-service-mastodon"));
+    return QUrl(QStringLiteral("image://theme/icon-l-mastodon"));
 }
 
 bool MastodonUploader::cancelEnabled() const

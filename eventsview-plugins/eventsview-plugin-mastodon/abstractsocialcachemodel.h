@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2013 Jolla Ltd.
+ * Copyright (C) 2013-2026 Jolla Ltd.
  * Contact: Lucien Xu <lucien.xu@jollamobile.com>
  *
  * This library is free software; you can redistribute it and/or

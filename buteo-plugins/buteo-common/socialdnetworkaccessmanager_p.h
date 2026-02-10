@@ -1,6 +1,6 @@
 /****************************************************************************
  **
- ** Copyright (C) 2013-2014 Jolla Ltd.
+ ** Copyright (C) 2013-2026 Jolla Ltd.
  ** Contact: Chris Adams <chris.adams@jollamobile.com>
  **
  ** This program/library is free software; you can redistribute it and/or

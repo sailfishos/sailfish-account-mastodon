@@ -3,7 +3,7 @@
 <provider version="1.0" id="mastodon">
     <name>Mastodon</name>
     <description>Mastodon social network</description>
-    <icon>image://theme/graphic-service-mastodon</icon>
+    <icon>image://theme/icon-l-mastodon</icon>
 
     <template>
         <group name="auth">

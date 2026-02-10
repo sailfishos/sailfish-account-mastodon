@@ -23,6 +23,10 @@ BuildRequires: pkgconfig(nemotransferengine-qt5) >= 2.0.0
 BuildRequires:  pkgconfig(nemonotifications-qt5)
 Requires: jolla-settings-accounts-extensions-onlinesync
 Requires: qmf-oauth2-plugin >= 0.0.7
+Requires: buteo-sync-plugin-mastodon-posts
+Requires: buteo-sync-plugin-mastodon-notifications
+Requires: eventsview-extensions-mastodon
+Requires: transferengine-plugin-mastodon
 Requires(post): %{_libexecdir}/manage-groups
 Requires(postun): %{_libexecdir}/manage-groups
 
@@ -38,6 +42,17 @@ Requires(post): systemd
 
 %description -n buteo-sync-plugin-mastodon-posts
 Provides synchronisation of Mastodon posts.
+
+%package -n buteo-sync-plugin-mastodon-notifications
+Summary: Provides synchronisation of Mastodon notifications
+Requires: %{name} = %{version}-%{release}
+Requires: buteo-syncfw-qt5-msyncd
+Requires: systemd
+Requires(post): systemd
+
+%description -n buteo-sync-plugin-mastodon-notifications
+Provides synchronisation of Mastodon notifications.
+
 
 %package -n eventsview-extensions-mastodon
 Summary: Provides integration of Mastodon posts into Events view
@@ -57,16 +72,6 @@ Requires: %{name} = %{version}-%{release}
 %description -n transferengine-plugin-mastodon
 Mastodon image sharing plugin for Transfer Engine.
 
-%package features-all
-Summary: Meta package to include all Mastodon account features
-Requires: %{name} = %{version}-%{release}
-Requires: buteo-sync-plugin-mastodon-posts
-Requires: eventsview-extensions-mastodon
-Requires: transferengine-plugin-mastodon
-
-%description features-all
-This package includes all Mastodon account features.
-
 %prep
 %setup -q -n %{name}-%{version}
 
@@ -78,12 +83,6 @@ This package includes all Mastodon account features.
 %qmake5_install
 cd icons
 make INSTALL_ROOT=%{buildroot} install
-for icon in $(find %{buildroot}%{_datadir}/themes/sailfish-default/silica -type f -name icon-l-mastodon.png); do
-    dir=$(dirname "$icon")
-    cp -a "$icon" "$dir/graphic-service-mastodon.png"
-    cp -a "$icon" "$dir/graphic-m-service-mastodon.png"
-    cp -a "$icon" "$dir/graphic-s-service-mastodon.png"
-done
 
 %post
 /sbin/ldconfig
@@ -107,15 +106,17 @@ fi
 %{_datadir}/accounts/ui/mastodon.qml
 %{_datadir}/accounts/ui/mastodon-settings.qml
 %{_datadir}/accounts/ui/mastodon-update.qml
-%{_datadir}/themes/sailfish-default/silica/*/icons/graphic-service-mastodon.png
-%{_datadir}/themes/sailfish-default/silica/*/icons/graphic-m-service-mastodon.png
-%{_datadir}/themes/sailfish-default/silica/*/icons/graphic-s-service-mastodon.png
 %{_datadir}/themes/sailfish-default/silica/*/icons/icon-l-mastodon.png
 
 %files -n buteo-sync-plugin-mastodon-posts
 %{_libdir}/buteo-plugins-qt5/oopp/libmastodon-posts-client.so
 %config %{_sysconfdir}/buteo/profiles/client/mastodon-posts.xml
 %config %{_sysconfdir}/buteo/profiles/sync/mastodon.Posts.xml
+
+%files -n buteo-sync-plugin-mastodon-notifications
+%{_libdir}/buteo-plugins-qt5/oopp/libmastodon-notifications-client.so
+%config %{_sysconfdir}/buteo/profiles/client/mastodon-notifications.xml
+%config %{_sysconfdir}/buteo/profiles/sync/mastodon.Notifications.xml
 
 %files -n eventsview-extensions-mastodon
 %{_libdir}/qt5/qml/com/jolla/eventsview/mastodon/*
@@ -128,6 +129,3 @@ fi
 %{_libdir}/nemo-transferengine/plugins/sharing/libmastodonshareplugin.so
 %{_libdir}/nemo-transferengine/plugins/transfer/libmastodontransferplugin.so
 %{_datadir}/nemo-transferengine/plugins/sharing/MastodonShareImage.qml
-
-%files features-all
-# Empty by design.

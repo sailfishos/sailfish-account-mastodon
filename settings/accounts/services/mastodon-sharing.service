@@ -2,7 +2,7 @@
 <service id="mastodon-sharing">
     <type>sharing</type>
     <name>Sharing</name>
-    <icon>image://theme/icon-m-share</icon>
+    <icon>image://theme/icon-l-mastodon</icon>
     <provider>mastodon</provider>
 
     <template>

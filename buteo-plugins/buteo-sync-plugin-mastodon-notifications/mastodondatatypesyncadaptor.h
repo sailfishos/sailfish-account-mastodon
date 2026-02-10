@@ -18,8 +18,8 @@
  **
  ****************************************************************************/
 
-#ifndef MASTODONDATATYPESYNCADAPTOR_H
-#define MASTODONDATATYPESYNCADAPTOR_H
+#ifndef MASTODONNOTIFICATIONSDATATYPESYNCADAPTOR_H
+#define MASTODONNOTIFICATIONSDATATYPESYNCADAPTOR_H
 
 #include "socialnetworksyncadaptor.h"
 
@@ -35,13 +35,13 @@ namespace SignOn {
     class SessionData;
 }
 
-class MastodonDataTypeSyncAdaptor : public SocialNetworkSyncAdaptor
+class MastodonNotificationsDataTypeSyncAdaptor : public SocialNetworkSyncAdaptor
 {
     Q_OBJECT
 
 public:
-    MastodonDataTypeSyncAdaptor(SocialNetworkSyncAdaptor::DataType dataType, QObject *parent);
-    virtual ~MastodonDataTypeSyncAdaptor();
+    MastodonNotificationsDataTypeSyncAdaptor(SocialNetworkSyncAdaptor::DataType dataType, QObject *parent);
+    virtual ~MastodonNotificationsDataTypeSyncAdaptor();
 
     void sync(const QString &dataTypeString, int accountId) override;
 
@@ -67,4 +67,4 @@ private:
     QMap<int, QString> m_apiHosts;
 };
 
-#endif // MASTODONDATATYPESYNCADAPTOR_H
+#endif // MASTODONNOTIFICATIONSDATATYPESYNCADAPTOR_H

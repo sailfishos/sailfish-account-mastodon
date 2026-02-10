@@ -18,32 +18,32 @@
  **
  ****************************************************************************/
 
-#include "mastodonpostsplugin.h"
-#include "mastodonpostssyncadaptor.h"
+#include "mastodonnotificationsplugin.h"
+#include "mastodonnotificationssyncadaptor.h"
 #include "socialnetworksyncadaptor.h"
 
-MastodonPostsPlugin::MastodonPostsPlugin(const QString& pluginName,
+MastodonNotificationsPlugin::MastodonNotificationsPlugin(const QString& pluginName,
                                          const Buteo::SyncProfile& profile,
                                          Buteo::PluginCbInterface *callbackInterface)
     : SocialdButeoPlugin(pluginName, profile, callbackInterface,
                          QStringLiteral("mastodon"),
-                         SocialNetworkSyncAdaptor::dataTypeName(SocialNetworkSyncAdaptor::Posts))
+                         SocialNetworkSyncAdaptor::dataTypeName(SocialNetworkSyncAdaptor::Notifications))
 {
 }
 
-MastodonPostsPlugin::~MastodonPostsPlugin()
+MastodonNotificationsPlugin::~MastodonNotificationsPlugin()
 {
 }
 
-SocialNetworkSyncAdaptor *MastodonPostsPlugin::createSocialNetworkSyncAdaptor()
+SocialNetworkSyncAdaptor *MastodonNotificationsPlugin::createSocialNetworkSyncAdaptor()
 {
-    return new MastodonPostsSyncAdaptor(this);
+    return new MastodonNotificationsSyncAdaptor(this);
 }
 
-Buteo::ClientPlugin* MastodonPostsPluginLoader::createClientPlugin(
+Buteo::ClientPlugin* MastodonNotificationsPluginLoader::createClientPlugin(
         const QString& pluginName,
         const Buteo::SyncProfile& profile,
         Buteo::PluginCbInterface* cbInterface)
 {
-    return new MastodonPostsPlugin(pluginName, profile, cbInterface);
+    return new MastodonNotificationsPlugin(pluginName, profile, cbInterface);
 }

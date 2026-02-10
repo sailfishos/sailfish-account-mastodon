@@ -16,24 +16,24 @@
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
  */
 
-#include "mastodonpostsdatabase.h"
+#include "mastodonnotificationsdatabase.h"
 
-static const char *DB_NAME = "mastodon.db";
+static const char *DB_NAME = "mastodonNotifications.db";
 static const char *ACCOUNT_NAME_KEY = "account_name";
 static const char *URL_KEY = "url";
 static const char *BOOSTED_BY_KEY = "boosted_by";
 static const char *INSTANCE_URL_KEY = "instance_url";
 
-MastodonPostsDatabase::MastodonPostsDatabase()
+MastodonNotificationsDatabase::MastodonNotificationsDatabase()
     : AbstractSocialPostCacheDatabase(QStringLiteral("mastodon"), QLatin1String(DB_NAME))
 {
 }
 
-MastodonPostsDatabase::~MastodonPostsDatabase()
+MastodonNotificationsDatabase::~MastodonNotificationsDatabase()
 {
 }
 
-void MastodonPostsDatabase::addMastodonPost(
+void MastodonNotificationsDatabase::addMastodonNotification(
         const QString &identifier,
         const QString &name,
         const QString &accountName,
@@ -54,7 +54,7 @@ void MastodonPostsDatabase::addMastodonPost(
     addPost(identifier, name, body, timestamp, icon, images, extra, account);
 }
 
-QString MastodonPostsDatabase::accountName(const SocialPost::ConstPtr &post)
+QString MastodonNotificationsDatabase::accountName(const SocialPost::ConstPtr &post)
 {
     if (post.isNull()) {
         return QString();
@@ -62,7 +62,7 @@ QString MastodonPostsDatabase::accountName(const SocialPost::ConstPtr &post)
     return post->extra().value(ACCOUNT_NAME_KEY).toString();
 }
 
-QString MastodonPostsDatabase::url(const SocialPost::ConstPtr &post)
+QString MastodonNotificationsDatabase::url(const SocialPost::ConstPtr &post)
 {
     if (post.isNull()) {
         return QString();
@@ -70,7 +70,7 @@ QString MastodonPostsDatabase::url(const SocialPost::ConstPtr &post)
     return post->extra().value(URL_KEY).toString();
 }
 
-QString MastodonPostsDatabase::boostedBy(const SocialPost::ConstPtr &post)
+QString MastodonNotificationsDatabase::boostedBy(const SocialPost::ConstPtr &post)
 {
     if (post.isNull()) {
         return QString();
@@ -78,7 +78,7 @@ QString MastodonPostsDatabase::boostedBy(const SocialPost::ConstPtr &post)
     return post->extra().value(BOOSTED_BY_KEY).toString();
 }
 
-QString MastodonPostsDatabase::instanceUrl(const SocialPost::ConstPtr &post)
+QString MastodonNotificationsDatabase::instanceUrl(const SocialPost::ConstPtr &post)
 {
     if (post.isNull()) {
         return QString();

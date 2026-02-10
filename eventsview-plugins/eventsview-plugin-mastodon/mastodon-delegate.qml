@@ -1,6 +1,6 @@
 /****************************************************************************
  **
- ** Copyright (C) 2026 Open Mobile Platform LLC.
+ ** Copyright (C) 2013-2026 Jolla Ltd.
  **
  ****************************************************************************/
 
@@ -17,10 +17,10 @@ SocialMediaAccountDelegate {
     //: Mastodon posts
     //% "Posts"
     headerText: qsTrId("lipstick-jolla-home-la-mastodon_posts")
-    headerIcon: "image://theme/graphic-service-mastodon"
+    headerIcon: "image://theme/icon-l-mastodon"
     showRemainingCount: false
 
-    services: ["Posts", "Notifications"]
+    services: ["Posts"]
     socialNetwork: 9
     dataType: SocialSync.Posts
     providerName: "mastodon"

@@ -41,7 +41,7 @@ void MastodonPluginInfo::serviceReady()
         info.setAccountId(details.accountId);
 
         info.setMethodId(QLatin1String("Mastodon"));
-        info.setMethodIcon(QLatin1String("image://theme/graphic-m-service-mastodon"));
+        info.setMethodIcon(QLatin1String("image://theme/icon-l-mastodon"));
         info.setShareUIPath(QLatin1String("/usr/share/nemo-transferengine/plugins/sharing/MastodonShareImage.qml"));
         info.setCapabilities(m_capabilities);
 

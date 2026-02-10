@@ -18,31 +18,31 @@
  **
  ****************************************************************************/
 
-#ifndef MASTODONPOSTSPLUGIN_H
-#define MASTODONPOSTSPLUGIN_H
+#ifndef MASTODONNOTIFICATIONSPLUGIN_H
+#define MASTODONNOTIFICATIONSPLUGIN_H
 
 #include "socialdbuteoplugin.h"
 
 #include <buteosyncfw5/SyncPluginLoader.h>
 
-class Q_DECL_EXPORT MastodonPostsPlugin : public SocialdButeoPlugin
+class Q_DECL_EXPORT MastodonNotificationsPlugin : public SocialdButeoPlugin
 {
     Q_OBJECT
 
 public:
-    MastodonPostsPlugin(const QString& pluginName,
-                        const Buteo::SyncProfile& profile,
-                        Buteo::PluginCbInterface *cbInterface);
-    ~MastodonPostsPlugin();
+    MastodonNotificationsPlugin(const QString& pluginName,
+                                const Buteo::SyncProfile& profile,
+                                Buteo::PluginCbInterface *cbInterface);
+    ~MastodonNotificationsPlugin();
 
 protected:
     SocialNetworkSyncAdaptor *createSocialNetworkSyncAdaptor() override;
 };
 
-class MastodonPostsPluginLoader : public Buteo::SyncPluginLoader
+class MastodonNotificationsPluginLoader : public Buteo::SyncPluginLoader
 {
     Q_OBJECT
-    Q_PLUGIN_METADATA(IID "org.sailfishos.plugins.sync.MastodonPostsPluginLoader")
+    Q_PLUGIN_METADATA(IID "org.sailfishos.plugins.sync.MastodonNotificationsPluginLoader")
     Q_INTERFACES(Buteo::SyncPluginLoader)
 
 public:
@@ -51,4 +51,4 @@ public:
                                             Buteo::PluginCbInterface* cbInterface) override;
 };
 
-#endif // MASTODONPOSTSPLUGIN_H
+#endif // MASTODONNOTIFICATIONSPLUGIN_H

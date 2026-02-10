@@ -36,18 +36,18 @@
 #include <SignOn/AuthSession>
 #include <SignOn/SessionData>
 
-MastodonDataTypeSyncAdaptor::MastodonDataTypeSyncAdaptor(
+MastodonNotificationsDataTypeSyncAdaptor::MastodonNotificationsDataTypeSyncAdaptor(
         SocialNetworkSyncAdaptor::DataType dataType,
         QObject *parent)
     : SocialNetworkSyncAdaptor(QStringLiteral("mastodon"), dataType, 0, parent)
 {
 }
 
-MastodonDataTypeSyncAdaptor::~MastodonDataTypeSyncAdaptor()
+MastodonNotificationsDataTypeSyncAdaptor::~MastodonNotificationsDataTypeSyncAdaptor()
 {
 }
 
-void MastodonDataTypeSyncAdaptor::sync(const QString &dataTypeString, int accountId)
+void MastodonNotificationsDataTypeSyncAdaptor::sync(const QString &dataTypeString, int accountId)
 {
     if (dataTypeString != SocialNetworkSyncAdaptor::dataTypeName(m_dataType)) {
         qCWarning(lcSocialPlugin) << "Mastodon" << SocialNetworkSyncAdaptor::dataTypeName(m_dataType)
@@ -61,7 +61,7 @@ void MastodonDataTypeSyncAdaptor::sync(const QString &dataTypeString, int accoun
     qCDebug(lcSocialPlugin) << "successfully triggered sync with profile:" << m_accountSyncProfile->name();
 }
 
-void MastodonDataTypeSyncAdaptor::updateDataForAccount(int accountId)
+void MastodonNotificationsDataTypeSyncAdaptor::updateDataForAccount(int accountId)
 {
     Accounts::Account *account = Accounts::Account::fromId(m_accountManager, accountId, this);
     if (!account) {
@@ -74,12 +74,12 @@ void MastodonDataTypeSyncAdaptor::updateDataForAccount(int accountId)
     signIn(account);
 }
 
-QString MastodonDataTypeSyncAdaptor::apiHost(int accountId) const
+QString MastodonNotificationsDataTypeSyncAdaptor::apiHost(int accountId) const
 {
     return m_apiHosts.value(accountId, QStringLiteral("https://mastodon.social"));
 }
 
-void MastodonDataTypeSyncAdaptor::errorHandler(QNetworkReply::NetworkError err)
+void MastodonNotificationsDataTypeSyncAdaptor::errorHandler(QNetworkReply::NetworkError err)
 {
     QNetworkReply *reply = qobject_cast<QNetworkReply*>(sender());
     if (!reply) {
@@ -104,7 +104,7 @@ void MastodonDataTypeSyncAdaptor::errorHandler(QNetworkReply::NetworkError err)
     }
 }
 
-void MastodonDataTypeSyncAdaptor::sslErrorsHandler(const QList<QSslError> &errs)
+void MastodonNotificationsDataTypeSyncAdaptor::sslErrorsHandler(const QList<QSslError> &errs)
 {
     QString sslerrs;
     foreach (const QSslError &e, errs) {
@@ -120,7 +120,7 @@ void MastodonDataTypeSyncAdaptor::sslErrorsHandler(const QList<QSslError> &errs)
     sender()->setProperty("isError", QVariant::fromValue<bool>(true));
 }
 
-void MastodonDataTypeSyncAdaptor::setCredentialsNeedUpdate(Accounts::Account *account)
+void MastodonNotificationsDataTypeSyncAdaptor::setCredentialsNeedUpdate(Accounts::Account *account)
 {
     qCInfo(lcSocialPlugin) << "sociald:Mastodon: setting CredentialsNeedUpdate to true for account:" << account->id();
     Accounts::Service srv(m_accountManager->service(syncServiceName()));
@@ -131,7 +131,7 @@ void MastodonDataTypeSyncAdaptor::setCredentialsNeedUpdate(Accounts::Account *ac
     account->syncAndBlock();
 }
 
-QString MastodonDataTypeSyncAdaptor::normalizeApiHost(const QString &rawHost)
+QString MastodonNotificationsDataTypeSyncAdaptor::normalizeApiHost(const QString &rawHost)
 {
     QString host = rawHost.trimmed();
     if (host.isEmpty()) {
@@ -154,7 +154,7 @@ QString MastodonDataTypeSyncAdaptor::normalizeApiHost(const QString &rawHost)
     return normalized;
 }
 
-void MastodonDataTypeSyncAdaptor::signIn(Accounts::Account *account)
+void MastodonNotificationsDataTypeSyncAdaptor::signIn(Accounts::Account *account)
 {
     const int accountId = account->id();
     if (!checkAccount(account)) {
@@ -251,7 +251,7 @@ void MastodonDataTypeSyncAdaptor::signIn(Accounts::Account *account)
     session->process(SignOn::SessionData(signonSessionData), mechanism);
 }
 
-void MastodonDataTypeSyncAdaptor::signOnError(const SignOn::Error &error)
+void MastodonNotificationsDataTypeSyncAdaptor::signOnError(const SignOn::Error &error)
 {
     SignOn::AuthSession *session = qobject_cast<SignOn::AuthSession*>(sender());
     Accounts::Account *account = session->property("account").value<Accounts::Account*>();
@@ -274,7 +274,7 @@ void MastodonDataTypeSyncAdaptor::signOnError(const SignOn::Error &error)
     decrementSemaphore(accountId);
 }
 
-void MastodonDataTypeSyncAdaptor::signOnResponse(const SignOn::SessionData &responseData)
+void MastodonNotificationsDataTypeSyncAdaptor::signOnResponse(const SignOn::SessionData &responseData)
 {
     QVariantMap data;
     foreach (const QString &key, responseData.propertyNames()) {
