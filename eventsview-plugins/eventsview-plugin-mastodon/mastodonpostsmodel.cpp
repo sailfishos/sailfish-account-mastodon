@@ -63,6 +63,9 @@ QHash<int, QByteArray> MastodonPostsModel::roleNames() const
     roleNames.insert(Link, "link");
     roleNames.insert(BoostedBy, "boostedBy");
     roleNames.insert(RebloggedBy, "rebloggedBy");
+    roleNames.insert(RepliesCount, "repliesCount");
+    roleNames.insert(FavouritesCount, "favouritesCount");
+    roleNames.insert(ReblogsCount, "reblogsCount");
     roleNames.insert(InstanceUrl, "instanceUrl");
     roleNames.insert(Accounts, "accounts");
     return roleNames;
@@ -100,6 +103,9 @@ void MastodonPostsModel::postsChanged()
         const QString accountName = d->database.accountName(post);
         const QString postUrl = d->database.url(post);
         const QString boostedBy = d->database.boostedBy(post);
+        const int repliesCount = d->database.repliesCount(post);
+        const int favouritesCount = d->database.favouritesCount(post);
+        const int reblogsCount = d->database.reblogsCount(post);
 
         eventMap.insert(MastodonPostsModel::MastodonId, post->identifier());
         eventMap.insert(MastodonPostsModel::Name, post->name());
@@ -112,6 +118,9 @@ void MastodonPostsModel::postsChanged()
         eventMap.insert(MastodonPostsModel::Link, postUrl);
         eventMap.insert(MastodonPostsModel::BoostedBy, boostedBy);
         eventMap.insert(MastodonPostsModel::RebloggedBy, boostedBy);
+        eventMap.insert(MastodonPostsModel::RepliesCount, repliesCount);
+        eventMap.insert(MastodonPostsModel::FavouritesCount, favouritesCount);
+        eventMap.insert(MastodonPostsModel::ReblogsCount, reblogsCount);
         eventMap.insert(MastodonPostsModel::InstanceUrl, d->database.instanceUrl(post));
 
         QVariantList images;

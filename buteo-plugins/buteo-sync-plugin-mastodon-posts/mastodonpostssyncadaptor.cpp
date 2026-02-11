@@ -270,6 +270,9 @@ void MastodonPostsSyncAdaptor::finishedPostsHandler()
             }
 
             const QString body = sanitizeContent(postObject.value(QStringLiteral("content")).toString());
+            const int repliesCount = postObject.value(QStringLiteral("replies_count")).toInt();
+            const int favouritesCount = postObject.value(QStringLiteral("favourites_count")).toInt();
+            const int reblogsCount = postObject.value(QStringLiteral("reblogs_count")).toInt();
 
             QList<QPair<QString, SocialPostImage::ImageType> > imageList;
             const QJsonArray mediaAttachments = postObject.value(QStringLiteral("media_attachments")).toArray();
@@ -304,6 +307,9 @@ void MastodonPostsSyncAdaptor::finishedPostsHandler()
                                 imageList,
                                 url,
                                 boostedBy,
+                                repliesCount,
+                                favouritesCount,
+                                reblogsCount,
                                 apiHost(accountId),
                                 accountId);
         }

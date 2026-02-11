@@ -38,15 +38,15 @@
 
 #include <algorithm>
 
-#define OPEN_BROWSER_ACTION(openUrlArgs)    \
+#define OPEN_URL_ACTION(openUrl)            \
     Notification::remoteAction(             \
         "default",                          \
         "",                                 \
-        "org.sailfishos.browser",           \
+        "org.sailfishos.fileservice",       \
         "/",                                \
-        "org.sailfishos.browser",           \
+        "org.sailfishos.fileservice",       \
         "openUrl",                          \
-        QVariantList() << openUrlArgs       \
+        QVariantList() << openUrl           \
     )
 
 namespace {
@@ -655,11 +655,7 @@ void MastodonNotificationsSyncAdaptor::publishSystemNotification(int accountId,
             && !parsedOpenUrl.host().isEmpty()
             ? openUrl
             : fallbackUrl;
-    QStringList openUrlArgs;
-    openUrlArgs << safeOpenUrl;
-
-    notification->setUrgency(Notification::Low);
-    notification->setRemoteAction(OPEN_BROWSER_ACTION(openUrlArgs));
+    notification->setRemoteAction(OPEN_URL_ACTION(safeOpenUrl));
     notification->publish();
     if (notification->replacesId() == 0) {
         qCWarning(lcSocialPlugin) << "failed to publish Mastodon notification"
@@ -728,6 +724,7 @@ Notification *MastodonNotificationsSyncAdaptor::createNotification(int accountId
     notification->setHintValue("x-nemo.sociald.account-id", accountId);
     notification->setHintValue(NotificationIdHint, notificationId);
     notification->setHintValue("x-nemo-feedback", QStringLiteral("social"));
+    notification->setHintValue("x-nemo-priority", 100); // Show on lockscreen
     notification->setCategory(QLatin1String(NotificationCategory));
 
     m_notificationObjects.insert(objectKey, notification);

@@ -13,16 +13,17 @@ SocialMediaFeedItem {
     id: item
 
     property variant imageList
-    property int likeCount
-    property int commentCount
-    property int boostCount
+    property int likeCount: item.intValue("favouritesCount", "likeCount", "favoriteCount")
+    property int commentCount: item.intValue("repliesCount", "commentCount")
+    property int boostCount: item.intValue("reblogsCount", "boostCount", "repostsCount")
 
     property string _booster: item.stringValue("boostedBy", "rebloggedBy", "retweeter")
     property string _displayName: item.stringValue("name", "displayName", "display_name")
     property string _accountName: item.stringValue("accountName", "acct", "screenName", "username")
     property string _bodyText: item.stringValue("body", "content", "text")
 
-    timestamp: item.stringValue("timestamp", "createdAt", "created_at")
+    timestamp: model.timestamp
+    onRefreshTimeCountChanged: formattedTime = Format.formatDate(model.timestamp, Format.TimeElapsed)
 
     avatar.y: item._booster.length > 0
               ? topMargin + boosterIcon.height + Theme.paddingSmall
@@ -110,7 +111,7 @@ SocialMediaFeedItem {
             wrapMode: Text.Wrap
             color: item.highlighted ? Theme.secondaryHighlightColor : Theme.secondaryColor
             font.pixelSize: Theme.fontSizeExtraSmall
-            text: item.formattedTime
+            text: item.metadataText()
             textFormat: Text.PlainText
         }
 
@@ -139,5 +140,30 @@ SocialMediaFeedItem {
             }
         }
         return ""
+    }
+
+    function intValue() {
+        for (var i = 0; i < arguments.length; ++i) {
+            var value = model[arguments[i]]
+            if (typeof value === "undefined" || value === null) {
+                continue
+            }
+            var number = Number(value)
+            if (!isNaN(number)) {
+                return Math.max(0, Math.floor(number))
+            }
+        }
+        return 0
+    }
+
+    function metadataText() {
+        var parts = []
+        parts.push("↩ " + item.commentCount)
+        parts.push("★ " + item.likeCount)
+        parts.push("↻ " + item.boostCount)
+        if (item.formattedTime.length > 0) {
+            parts.push(item.formattedTime)
+        }
+        return parts.join(" | ")
     }
 }

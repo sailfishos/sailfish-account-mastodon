@@ -42,6 +42,9 @@ public:
         Link,
         BoostedBy,
         RebloggedBy,
+        RepliesCount,
+        FavouritesCount,
+        ReblogsCount,
         InstanceUrl,
         Accounts
     };

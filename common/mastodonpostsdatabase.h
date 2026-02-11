@@ -34,12 +34,16 @@ public:
                          const QString &icon,
                          const QList<QPair<QString, SocialPostImage::ImageType> > &images,
                          const QString &url, const QString &boostedBy,
+                         int repliesCount, int favouritesCount, int reblogsCount,
                          const QString &instanceUrl,
                          int account);
 
     static QString accountName(const SocialPost::ConstPtr &post);
     static QString url(const SocialPost::ConstPtr &post);
     static QString boostedBy(const SocialPost::ConstPtr &post);
+    static int repliesCount(const SocialPost::ConstPtr &post);
+    static int favouritesCount(const SocialPost::ConstPtr &post);
+    static int reblogsCount(const SocialPost::ConstPtr &post);
     static QString instanceUrl(const SocialPost::ConstPtr &post);
 };
 
