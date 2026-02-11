@@ -42,16 +42,11 @@ Sailfish OS account integration for Mastodon.
   - `icons/icon-l-mastodon`
 ### `rpm/`
 - Packaging for all modules in `rpm/sailfish-account-mastodon.spec`.
-- Subpackages:
-  - `sailfish-account-mastodon`
-  - `buteo-sync-plugin-mastodon-posts`
-  - `buteo-sync-plugin-mastodon-notifications`
-  - `eventsview-extensions-mastodon`
-  - `transferengine-plugin-mastodon`
-  - `sailfish-account-mastodon-ts-devel`
-- Main package requires runtime feature subpackages; `sailfish-account-mastodon-ts-devel` is optional.
+- Packages:
+  - `sailfish-account-mastodon` (all runtime components)
+  - `sailfish-account-mastodon-ts-devel` (translation source files only)
 - `%qmake5_install` already installs icon outputs from the `icons/` subproject; avoid a second explicit `icons` `make install` in `%install`.
-- Translation source `.ts` files are packaged in `sailfish-account-mastodon-ts-devel` (runtime packages ship `.qm` only).
+- Translation source `.ts` files are packaged in `sailfish-account-mastodon-ts-devel` (runtime package ships `.qm` only).
 - Runtime package ships the Mastodon settings translation-loader QML plugin under `%{_libdir}/qt5/qml/com/jolla/settings/accounts/mastodon/`.
 
 ### Root project
