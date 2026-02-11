@@ -56,13 +56,17 @@ private:
 
     struct PendingSyncState {
         QString accessToken;
-        QString minReadId;
+        QString unreadFloorId;
+        QString lastFetchedId;
+        QString maxFetchedId;
         QHash<QString, PendingNotification> pendingNotifications;
     };
 
     static QString sanitizeContent(const QString &content);
     static QDateTime parseTimestamp(const QString &timestampString);
     static int compareNotificationIds(const QString &left, const QString &right);
+    QString loadLastFetchedId(int accountId) const;
+    void saveLastFetchedId(int accountId, const QString &lastFetchedId);
 
     void requestUnreadMarker(int accountId, const QString &accessToken);
     void requestNotifications(int accountId,
@@ -75,17 +79,14 @@ private:
     Notification *findNotification(int accountId, const QString &notificationId);
     void closeAccountNotifications(int accountId, const QSet<QString> &keepNotificationIds = QSet<QString>());
     static QString notificationObjectKey(int accountId, const QString &notificationId);
-    void markReadFromNotification(Notification *notification);
 
 private Q_SLOTS:
     void finishedUnreadMarkerHandler();
     void finishedNotificationsHandler();
     void finishedMarkReadHandler();
-    void notificationClosedWithReason(uint reason);
 
 private:
     QHash<int, PendingSyncState> m_pendingSyncStates;
-    QHash<int, QString> m_accessTokens;
     QHash<int, QString> m_lastMarkedReadIds;
     QHash<QString, Notification *> m_notificationObjects;
 };

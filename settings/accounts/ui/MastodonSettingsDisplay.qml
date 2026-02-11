@@ -39,23 +39,24 @@ StandardAccountSettingsDisplay {
     onAboutToSaveAccount: {
         settingsLoader.updateAllSyncProfiles()
 
+        var storedDescriptionValue = root.account.configurationValues("")["description"]
+        var storedDescription = storedDescriptionValue ? storedDescriptionValue.toString().trim() : ""
+        var storedCredentialsUserName = root.account.defaultCredentialsUserName
+                ? root.account.defaultCredentialsUserName.toString().trim()
+                : ""
         var editedDescription = root.account.displayName
                 ? root.account.displayName.toString().trim()
                 : ""
         var providerDisplayName = _providerDisplayName()
         if (editedDescription === providerDisplayName) {
-            editedDescription = ""
+            // Avoid clobbering stored handle if displayName temporarily reverts to provider name.
+            editedDescription = storedDescription.length > 0 ? storedDescription : storedCredentialsUserName
         }
 
-        var storedDescriptionValue = root.account.configurationValues("")["description"]
-        var storedDescription = storedDescriptionValue ? storedDescriptionValue.toString().trim() : ""
         if (storedDescription !== editedDescription) {
             root.account.setConfigurationValue("", "description", editedDescription)
         }
 
-        var storedCredentialsUserName = root.account.defaultCredentialsUserName
-                ? root.account.defaultCredentialsUserName.toString().trim()
-                : ""
         if (storedCredentialsUserName !== editedDescription) {
             root.account.setConfigurationValue("", "default_credentials_username", editedDescription)
         }

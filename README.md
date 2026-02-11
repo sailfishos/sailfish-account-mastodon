@@ -61,9 +61,9 @@ Sailfish OS account integration for Mastodon.
 
 - Events view shows Mastodon posts (not notification entries).
 - System notifications are produced by `buteo-sync-plugin-mastodon-notifications`.
-- Notifications sync fetches unread items using Mastodon markers (`last_read_id`).
+- Notifications sync starts from Mastodon server marker (`notifications.last_read_id`) and uses local cursor dedupe via per-account `LastFetchedNotificationId`.
 - Each unread Mastodon notification is published as a separate Sailfish system notification.
-- Dismissing the Sailfish notification marks those items as read on Mastodon via markers API.
+- Mastodon marker (`last_read_id`) is updated only when no local Mastodon notifications remain for that account.
 - Notification template profile dispatches per-account sync profiles on schedule (default every 30 minutes), not only at boot.
 
 ## Build Requirements
