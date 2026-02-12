@@ -88,7 +88,16 @@ void MastodonUploader::startUploading()
         return;
     }
 
-    postImage();
+    const QString mimeType = mediaItem()->value(MediaItem::MimeType).toString();
+    if (mimeType.startsWith(QLatin1String("image/"))) {
+        postImage();
+    } else if (mimeType.contains(QLatin1String("text/plain"))
+               || mimeType.contains(QLatin1String("text/x-url"))) {
+        postStatus();
+    } else {
+        qWarning() << Q_FUNC_INFO << "Unsupported mime type:" << mimeType;
+        setStatus(MediaTransferInterface::TransferInterrupted);
+    }
 }
 
 void MastodonUploader::transferFinished()
@@ -172,6 +181,53 @@ void MastodonUploader::postImage()
         m_filePath = sourceFile;
     }
 
+    ensureApi();
+
+    const bool ok = m_api->uploadImage(m_filePath,
+                                       mediaItem()->value(MediaItem::Description).toString(),
+                                       mediaItem()->value(MediaItem::MimeType).toString(),
+                                       m_accountDetails.apiHost,
+                                       m_accountDetails.accessToken);
+    if (ok) {
+        setStatus(MediaTransferInterface::TransferStarted);
+    } else {
+        setStatus(MediaTransferInterface::TransferInterrupted);
+        qWarning() << Q_FUNC_INFO << "Failed to upload image";
+    }
+}
+
+void MastodonUploader::postStatus()
+{
+    ensureApi();
+
+    const QVariantMap userData = mediaItem()->value(MediaItem::UserData).toMap();
+    QString statusText = userData.value(QStringLiteral("status")).toString().trimmed();
+    if (statusText.isEmpty()) {
+        statusText = mediaItem()->value(MediaItem::Description).toString().trimmed();
+    }
+    if (statusText.isEmpty()) {
+        statusText = mediaItem()->value(MediaItem::ContentData).toString().trimmed();
+    }
+
+    if (statusText.isEmpty()) {
+        qWarning() << Q_FUNC_INFO << "Failed to resolve status text";
+        setStatus(MediaTransferInterface::TransferInterrupted);
+        return;
+    }
+
+    const bool ok = m_api->postStatus(statusText,
+                                      m_accountDetails.apiHost,
+                                      m_accountDetails.accessToken);
+    if (ok) {
+        setStatus(MediaTransferInterface::TransferStarted);
+    } else {
+        setStatus(MediaTransferInterface::TransferInterrupted);
+        qWarning() << Q_FUNC_INFO << "Failed to post status";
+    }
+}
+
+void MastodonUploader::ensureApi()
+{
     if (!m_api) {
         m_api = new MastodonApi(m_qnam, this);
         connect(m_api, &MastodonApi::transferProgressUpdated,
@@ -184,17 +240,5 @@ void MastodonUploader::postImage()
                 this, &MastodonUploader::transferCanceled);
         connect(m_api, &MastodonApi::credentialsExpired,
                 this, &MastodonUploader::credentialsExpired);
-    }
-
-    const bool ok = m_api->uploadImage(m_filePath,
-                                       mediaItem()->value(MediaItem::Description).toString(),
-                                       mediaItem()->value(MediaItem::MimeType).toString(),
-                                       m_accountDetails.apiHost,
-                                       m_accountDetails.accessToken);
-    if (ok) {
-        setStatus(MediaTransferInterface::TransferStarted);
-    } else {
-        setStatus(MediaTransferInterface::TransferInterrupted);
-        qWarning() << Q_FUNC_INFO << "Failed to upload image";
     }
 }

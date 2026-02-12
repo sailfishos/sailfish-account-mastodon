@@ -6,7 +6,9 @@ MastodonPluginInfo::MastodonPluginInfo()
     , m_mastodonShareServiceStatus(new MastodonShareServiceStatus(this))
 {
     m_capabilities << QLatin1String("image/jpeg")
-                   << QLatin1String("image/png");
+                   << QLatin1String("image/png")
+                   << QLatin1String("text/x-url")
+                   << QLatin1String("text/plain");
 
     connect(m_mastodonShareServiceStatus, &MastodonShareServiceStatus::serviceReady,
             this, &MastodonPluginInfo::serviceReady);
@@ -42,9 +44,8 @@ void MastodonPluginInfo::serviceReady()
 
         info.setMethodId(QLatin1String("Mastodon"));
         info.setMethodIcon(QLatin1String("image://theme/icon-l-mastodon"));
-        info.setShareUIPath(QLatin1String("/usr/share/nemo-transferengine/plugins/sharing/MastodonShareImage.qml"));
+        info.setShareUIPath(QLatin1String("/usr/share/nemo-transferengine/plugins/sharing/MastodonSharePost.qml"));
         info.setCapabilities(m_capabilities);
-
         m_info << info;
     }
 

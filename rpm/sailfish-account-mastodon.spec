@@ -92,7 +92,7 @@ fi
 
 %{_libdir}/nemo-transferengine/plugins/sharing/libmastodonshareplugin.so
 %{_libdir}/nemo-transferengine/plugins/transfer/libmastodontransferplugin.so
-%{_datadir}/nemo-transferengine/plugins/sharing/MastodonShareImage.qml
+%{_datadir}/nemo-transferengine/plugins/sharing/MastodonSharePost.qml
 
 %files -n sailfish-account-mastodon-ts-devel
 %{_datadir}/translations/source/settings-accounts-mastodon.ts

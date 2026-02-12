@@ -26,6 +26,9 @@ public:
                      const QString &mimeType,
                      const QString &apiHost,
                      const QString &accessToken);
+    bool postStatus(const QString &statusText,
+                    const QString &apiHost,
+                    const QString &accessToken);
 
     void cancelUpload();
 
@@ -43,7 +46,7 @@ private Q_SLOTS:
 
 private:
     static QString normalizeApiHost(const QString &rawHost);
-    bool postStatus(const QString &mediaId);
+    bool postStatusInternal(const QString &mediaId);
     void finishTransfer(QNetworkReply::NetworkError error, int httpCode, const QByteArray &data);
 
     QMap<QNetworkReply*, API_CALL> m_replies;

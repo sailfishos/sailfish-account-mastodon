@@ -108,10 +108,26 @@ bool MastodonApi::uploadImage(const QString &filePath,
     return true;
 }
 
-bool MastodonApi::postStatus(const QString &mediaId)
+bool MastodonApi::postStatus(const QString &statusText,
+                             const QString &apiHost,
+                             const QString &accessToken)
 {
-    if (mediaId.isEmpty()) {
-        qWarning() << Q_FUNC_INFO << "media id is empty";
+    m_apiHost = normalizeApiHost(apiHost);
+    m_accessToken = accessToken;
+    m_statusText = statusText;
+
+    if (m_accessToken.isEmpty()) {
+        qWarning() << Q_FUNC_INFO << "missing access token";
+        return false;
+    }
+
+    return postStatusInternal(QString());
+}
+
+bool MastodonApi::postStatusInternal(const QString &mediaId)
+{
+    if (m_statusText.trimmed().isEmpty() && mediaId.isEmpty()) {
+        qWarning() << Q_FUNC_INFO << "status and media id are empty";
         return false;
     }
 
@@ -119,7 +135,9 @@ bool MastodonApi::postStatus(const QString &mediaId)
     if (!m_statusText.isEmpty()) {
         query.addQueryItem(QStringLiteral("status"), m_statusText);
     }
-    query.addQueryItem(QStringLiteral("media_ids[]"), mediaId);
+    if (!mediaId.isEmpty()) {
+        query.addQueryItem(QStringLiteral("media_ids[]"), mediaId);
+    }
 
     const QByteArray postData = query.query(QUrl::FullyEncoded).toUtf8();
 
@@ -202,7 +220,7 @@ void MastodonApi::finished()
             }
         }
 
-        if (!postStatus(mediaId)) {
+        if (!postStatusInternal(mediaId)) {
             qWarning() << Q_FUNC_INFO << "unable to create mastodon status";
             emit transferError();
         }

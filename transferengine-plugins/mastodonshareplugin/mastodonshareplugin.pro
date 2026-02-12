@@ -20,7 +20,7 @@ target.path = $$[QT_INSTALL_LIBS]/nemo-transferengine/plugins/sharing
 
 OTHER_FILES += *.qml
 
-shareui.files = MastodonShareImage.qml
+shareui.files = MastodonSharePost.qml
 shareui.path = /usr/share/nemo-transferengine/plugins/sharing
 
 INSTALLS += target shareui

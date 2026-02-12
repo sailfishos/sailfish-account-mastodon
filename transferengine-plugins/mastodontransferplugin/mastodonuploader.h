@@ -38,7 +38,9 @@ protected:
     void setStatus(MediaTransferInterface::TransferStatus status);
 
 private:
+    void ensureApi();
     void postImage();
+    void postStatus();
 
     MastodonApi *m_api;
     MastodonShareServiceStatus *m_mastodonShareServiceStatus;

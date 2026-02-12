@@ -32,9 +32,13 @@ Sailfish OS account integration for Mastodon.
 - Includes delegate/feed item QML and `MastodonPostsModel`.
 
 ### `transferengine-plugins/`
-- Transfer Engine integration for Mastodon image sharing.
+- Transfer Engine integration for Mastodon sharing.
 - `mastodonshareplugin/`: sharing method discovery + metadata.
 - `mastodontransferplugin/`: media upload + status creation.
+- Single share UI entry: `MastodonSharePost.qml` handles both media and text/link posting.
+- Supports:
+  - image sharing (`image/jpeg`, `image/png`)
+  - link/text sharing (`text/x-url`, `text/plain`) with title/link extraction from share resources.
 
 ### `icons/`
 - Mastodon SVG assets and `sailfish-svg2png` conversion setup.
