@@ -89,7 +89,8 @@ void MastodonUploader::startUploading()
     }
 
     const QString mimeType = mediaItem()->value(MediaItem::MimeType).toString();
-    if (mimeType.startsWith(QLatin1String("image/"))) {
+    if (mimeType.startsWith(QLatin1String("image/"))
+            || mimeType.startsWith(QLatin1String("video/"))) {
         postImage();
     } else if (mimeType.contains(QLatin1String("text/plain"))
                || mimeType.contains(QLatin1String("text/x-url"))) {
@@ -154,7 +155,8 @@ void MastodonUploader::postImage()
 
     QMimeDatabase db;
     const QMimeType mime = db.mimeTypeForFile(sourceFile);
-    const bool isJpeg = mime.name() == QLatin1String("image/jpeg");
+    const bool isImage = mediaItem()->value(MediaItem::MimeType).toString().startsWith(QLatin1String("image/"));
+    const bool isJpeg = isImage && mime.name() == QLatin1String("image/jpeg");
 
     if (isJpeg && mediaItem()->value(MediaItem::MetadataStripped).toBool()) {
         m_useTmpFile = true;
@@ -167,7 +169,7 @@ void MastodonUploader::postImage()
     }
 
     const qreal scale = mediaItem()->value(MediaItem::ScalePercent).toReal();
-    if (0 < scale && scale < 1) {
+    if (isImage && 0 < scale && scale < 1) {
         m_useTmpFile = true;
         m_filePath = ImageOperation::scaleImage(sourceFile, scale, m_filePath);
         if (m_filePath.isEmpty()) {
@@ -192,7 +194,7 @@ void MastodonUploader::postImage()
         setStatus(MediaTransferInterface::TransferStarted);
     } else {
         setStatus(MediaTransferInterface::TransferInterrupted);
-        qWarning() << Q_FUNC_INFO << "Failed to upload image";
+        qWarning() << Q_FUNC_INFO << "Failed to upload media";
     }
 }
 

@@ -7,6 +7,7 @@ MastodonPluginInfo::MastodonPluginInfo()
 {
     m_capabilities << QLatin1String("image/jpeg")
                    << QLatin1String("image/png")
+                   << QLatin1String("video/mp4")
                    << QLatin1String("text/x-url")
                    << QLatin1String("text/plain");
 

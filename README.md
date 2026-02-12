@@ -37,7 +37,7 @@ Sailfish OS account integration for Mastodon.
 - `mastodontransferplugin/`: media upload + status creation.
 - Single share UI entry: `MastodonSharePost.qml` handles both media and text/link posting.
 - Supports:
-  - image sharing (`image/jpeg`, `image/png`)
+  - media sharing (`image/jpeg`, `image/png`, `video/mp4`)
   - link/text sharing (`text/x-url`, `text/plain`) with title/link extraction from share resources.
 
 ### `icons/`
