@@ -1,2 +1,4 @@
+# Copyright (C) 2013-2026 Jolla Ltd.
+
 module com.jolla.settings.accounts.mastodon
 plugin mastodonaccountstranslationsplugin

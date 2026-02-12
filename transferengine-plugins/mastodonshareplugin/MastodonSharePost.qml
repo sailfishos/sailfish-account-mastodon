@@ -1,3 +1,7 @@
+/*
+ * Copyright (C) 2013-2026 Jolla Ltd.
+ */
+
 import QtQuick 2.6
 import Sailfish.Silica 1.0
 import Sailfish.Lipstick 1.0

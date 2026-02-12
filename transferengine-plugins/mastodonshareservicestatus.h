@@ -1,3 +1,7 @@
+/*
+ * Copyright (C) 2013-2026 Jolla Ltd.
+ */
+
 #ifndef MASTODONSHARESERVICESTATUS_H
 #define MASTODONSHARESERVICESTATUS_H
 

@@ -1,3 +1,5 @@
+# Copyright (C) 2013-2026 Jolla Ltd.
+
 Name: sailfish-account-mastodon
 License: LGPLv2+
 Version: 0.1.0

@@ -1,3 +1,7 @@
+/*
+ * Copyright (C) 2013-2026 Jolla Ltd.
+ */
+
 #ifndef MASTODONAPI_H
 #define MASTODONAPI_H
 

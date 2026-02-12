@@ -1,4 +1,5 @@
 <?xml version="1.0" encoding="UTF-8" ?>
+<!-- Copyright (C) 2013-2026 Jolla Ltd. -->
 <service id="mastodon-sharing">
     <type>sharing</type>
     <translations>/usr/share/translations/settings-accounts-mastodon</translations>
