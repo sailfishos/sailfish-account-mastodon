@@ -115,7 +115,7 @@ AccountCreationAgent {
         }
 
         var postData = []
-        //% "Sailfish Mastodon"
+        //% "Mastodon in SailfishOS"
         postData.push("client_name=" + encodeURIComponent(qsTrId("settings-accounts-mastodon-la-client_name")))
         postData.push("redirect_uris=" + encodeURIComponent(callbackUri))
         postData.push("scopes=" + encodeURIComponent("read write"))

@@ -7,15 +7,32 @@
 import QtQuick 2.0
 import Sailfish.Silica 1.0
 import Sailfish.TextLinking 1.0
+import org.nemomobile.lipstick 0.1
 import "shared"
 
 SocialMediaFeedItem {
     id: item
 
     property variant imageList
+    property string resolvedStatusUrl: item.stringValue("url", "link", "uri")
+    property string postId
+    property QtObject postActions
     property int likeCount: item.intValue("favouritesCount", "likeCount", "favoriteCount")
     property int commentCount: item.intValue("repliesCount", "commentCount")
     property int boostCount: item.intValue("reblogsCount", "boostCount", "repostsCount")
+    property bool favourited: !!model.favourited
+    property bool reblogged: !!model.reblogged
+    property int _likeCountOverride: -1
+    property int _boostCountOverride: -1
+    property int _favouritedOverride: -1
+    property int _rebloggedOverride: -1
+    property bool isFavourited: _favouritedOverride >= 0 ? _favouritedOverride === 1 : favourited
+    property bool isReblogged: _rebloggedOverride >= 0 ? _rebloggedOverride === 1 : reblogged
+    readonly property bool housekeeping: Lipstick.compositor.eventsLayer.housekeeping
+    readonly property bool lockScreenActive: Lipstick.compositor.lockScreenLayer.deviceIsLocked
+    property bool _contextMenuOpen: false
+    property var _actionMenu
+    property real _contextMenuHeight: (_contextMenuOpen && _actionMenu) ? _actionMenu.height : 0
 
     property string _booster: item.stringValue("boostedBy", "rebloggedBy", "retweeter")
     property string _displayName: item.stringValue("name", "displayName", "display_name")
@@ -24,11 +41,28 @@ SocialMediaFeedItem {
 
     timestamp: model.timestamp
     onRefreshTimeCountChanged: formattedTime = Format.formatDate(model.timestamp, Format.TimeElapsed)
+    onLockScreenActiveChanged: {
+        if (lockScreenActive && _actionMenu) {
+            _actionMenu.close()
+        }
+    }
+    onPressAndHold: {
+        if (!housekeeping && !lockScreenActive) {
+            _contextMenuOpen = false
+            openActionMenu()
+        }
+    }
+    Component.onDestruction: {
+        if (_actionMenu) {
+            _actionMenu.destroy()
+            _actionMenu = null
+        }
+    }
 
     avatar.y: item._booster.length > 0
               ? topMargin + boosterIcon.height + Theme.paddingSmall
               : topMargin
-    contentHeight: Math.max(content.y + content.height, avatar.y + avatar.height) + bottomMargin
+    contentHeight: Math.max(content.y + content.height, avatar.y + avatar.height) + bottomMargin + _contextMenuHeight
     topMargin: item._booster.length > 0 ? Theme.paddingMedium : Theme.paddingLarge
     userRemovable: false
 
@@ -103,16 +137,61 @@ SocialMediaFeedItem {
             plainText: item._bodyText
         }
 
-        Text {
+        Row {
+            id: metadataRow
+
             width: parent.width
             height: previewRow.visible ? implicitHeight + Theme.paddingMedium : implicitHeight    // add padding below
-            maximumLineCount: 1
-            elide: Text.ElideRight
-            wrapMode: Text.Wrap
-            color: item.highlighted ? Theme.secondaryHighlightColor : Theme.secondaryColor
-            font.pixelSize: Theme.fontSizeExtraSmall
-            text: item.metadataText()
-            textFormat: Text.PlainText
+            spacing: Theme.paddingSmall
+
+            readonly property color passiveColor: item.highlighted ? Theme.secondaryHighlightColor : Theme.secondaryColor
+            readonly property color activeColor: Theme.highlightColor
+
+            Label {
+                font.pixelSize: Theme.fontSizeExtraSmall
+                text: "↩ " + item.commentCount
+                color: metadataRow.passiveColor
+            }
+
+            Label {
+                font.pixelSize: Theme.fontSizeExtraSmall
+                text: "|"
+                color: metadataRow.passiveColor
+            }
+
+            Label {
+                font.pixelSize: Theme.fontSizeExtraSmall
+                text: "★ " + (item._likeCountOverride >= 0 ? item._likeCountOverride : item.likeCount)
+                color: item.isFavourited ? metadataRow.activeColor : metadataRow.passiveColor
+            }
+
+            Label {
+                font.pixelSize: Theme.fontSizeExtraSmall
+                text: "|"
+                color: metadataRow.passiveColor
+            }
+
+            Label {
+                font.pixelSize: Theme.fontSizeExtraSmall
+                text: "↻ " + (item._boostCountOverride >= 0 ? item._boostCountOverride : item.boostCount)
+                color: item.isReblogged ? metadataRow.activeColor : metadataRow.passiveColor
+            }
+
+            Label {
+                visible: item.formattedTime.length > 0
+                font.pixelSize: Theme.fontSizeExtraSmall
+                text: "|"
+                color: metadataRow.passiveColor
+            }
+
+            Label {
+                visible: item.formattedTime.length > 0
+                width: Math.max(0, metadataRow.width - x)
+                truncationMode: TruncationMode.Fade
+                font.pixelSize: Theme.fontSizeExtraSmall
+                text: item.formattedTime
+                color: metadataRow.passiveColor
+            }
         }
 
         SocialMediaPreviewRow {
@@ -156,14 +235,186 @@ SocialMediaFeedItem {
         return 0
     }
 
-    function metadataText() {
-        var parts = []
-        parts.push("↩ " + item.commentCount)
-        parts.push("★ " + item.likeCount)
-        parts.push("↻ " + item.boostCount)
-        if (item.formattedTime.length > 0) {
-            parts.push(item.formattedTime)
+    function actionPostId() {
+        if (item.postId.length > 0) {
+            return item.postId
         }
-        return parts.join(" | ")
+        return item.stringValue("mastodonId", "statusId", "id", "twitterId")
+    }
+
+    function actionAccountId() {
+        var parsed = Number(item.accountId)
+        return isNaN(parsed) ? -1 : parsed
+    }
+
+    function topLevelParent() {
+        var p = item
+        while (p && p.parent) {
+            p = p.parent
+        }
+        return p
+    }
+
+    function openActionMenu() {
+        if (_actionMenu) {
+            _actionMenu.destroy()
+            _actionMenu = null
+        }
+
+        var parentItem = topLevelParent()
+        _actionMenu = actionMenuComponent.createObject(parentItem)
+        if (_actionMenu) {
+            _actionMenu.open(item)
+        }
+    }
+
+    Connections {
+        target: item.postActions ? item.postActions : null
+
+        onActionSucceeded: {
+            if (accountId !== item.actionAccountId() || statusId !== item.actionPostId()) {
+                return
+            }
+
+            if (favouritesCount >= 0) {
+                item._likeCountOverride = favouritesCount
+            }
+            if (reblogsCount >= 0) {
+                item._boostCountOverride = reblogsCount
+            }
+            item._favouritedOverride = favourited ? 1 : 0
+            item._rebloggedOverride = reblogged ? 1 : 0
+            item._contextMenuOpen = false
+
+            if (item._accountDelegate) {
+                item._accountDelegate.sync()
+            }
+        }
+
+        onActionFailed: {
+            if (accountId !== item.actionAccountId() || statusId !== item.actionPostId()) {
+                return
+            }
+            console.warn("Mastodon action failed:", action, errorMessage)
+            item._contextMenuOpen = false
+        }
+    }
+
+    Component {
+        id: actionMenuComponent
+
+        ContextMenu {
+            id: actionMenu
+            property bool menuOpen: height > 0
+            property bool wasOpened: false
+            z: 10000
+
+            onPositionChanged: {
+                horizontalActions.xPos = _contentColumn.mapFromItem(actionMenu, mouse.x, mouse.y).x
+            }
+
+            onMenuOpenChanged: {
+                if (menuOpen) {
+                    wasOpened = true
+                    item._contextMenuOpen = true
+                } else if (wasOpened) {
+                    item._contextMenuOpen = false
+                    destroy()
+                    item._actionMenu = null
+                }
+            }
+
+            Item {
+                id: horizontalActions
+
+                // Makes Silica treat this custom row as a context-menu item.
+                property int __silica_menuitem
+                property bool down
+                property bool highlighted
+                signal clicked
+
+                property real xPos: 0
+                property int hoveredIndex: -1
+                readonly property bool actionEnabled: item.postActions
+                                                    && item.actionPostId().length > 0
+                                                    && item.actionAccountId() >= 0
+                                                    && !item.lockScreenActive
+                                                    && !item.housekeeping
+
+                width: parent.width
+                height: Theme.itemSizeMedium
+
+                onXPosChanged: hoveredIndex = xPos < width / 2 ? 0 : 1
+                onDownChanged: if (!down) hoveredIndex = -1
+
+                onClicked: {
+                    xPos = _contentColumn.mapFromItem(actionMenu, actionMenu.mouseX, actionMenu.mouseY).x
+                    var index = hoveredIndex >= 0 ? hoveredIndex : (xPos < width / 2 ? 0 : 1)
+                    if (!actionEnabled) {
+                        return
+                    }
+                    var postId = item.actionPostId()
+                    var accountId = item.actionAccountId()
+                    if (index === 0) {
+                        if (item.isFavourited) {
+                            item.postActions.unfavourite(accountId, postId)
+                        } else {
+                            item.postActions.favourite(accountId, postId)
+                        }
+                    } else {
+                        if (item.isReblogged) {
+                            item.postActions.unboost(accountId, postId)
+                        } else {
+                            item.postActions.boost(accountId, postId)
+                        }
+                    }
+                }
+
+                Rectangle {
+                    anchors.verticalCenter: parent.verticalCenter
+                    x: horizontalActions.hoveredIndex === 1 ? parent.width / 2 : 0
+                    width: parent.width / 2
+                    height: parent.height
+                    visible: horizontalActions.down && horizontalActions.hoveredIndex >= 0
+                    color: Theme.rgba(Theme.highlightBackgroundColor, Theme.highlightBackgroundOpacity)
+                }
+
+                Row {
+                    anchors.fill: parent
+
+                    Label {
+                        width: parent.width / 2
+                        height: parent.height
+                        horizontalAlignment: Text.AlignHCenter
+                        verticalAlignment: Text.AlignVCenter
+                        font.pixelSize: Theme.fontSizeExtraLarge
+                        text: "★"
+                        color: horizontalActions.actionEnabled
+                               ? (item.isFavourited
+                                  ? Theme.highlightColor
+                                  : ((horizontalActions.down && horizontalActions.hoveredIndex === 0)
+                                     || (horizontalActions.highlighted && horizontalActions.hoveredIndex === 0)
+                                     ? Theme.secondaryHighlightColor : Theme.primaryColor))
+                               : Theme.rgba(Theme.secondaryColor, 0.4)
+                    }
+
+                    Label {
+                        width: parent.width / 2
+                        height: parent.height
+                        horizontalAlignment: Text.AlignHCenter
+                        verticalAlignment: Text.AlignVCenter
+                        font.pixelSize: Theme.fontSizeExtraLarge
+                        text: "↻"
+                        color: horizontalActions.actionEnabled
+                               ? (item.isReblogged
+                                  ? Theme.highlightColor
+                                  : ((horizontalActions.down && horizontalActions.hoveredIndex === 1)
+                                     || (horizontalActions.highlighted && horizontalActions.hoveredIndex === 1)
+                                     ? Theme.secondaryHighlightColor : Theme.primaryColor))
+                               : Theme.rgba(Theme.secondaryColor, 0.4)
+                    }
+                }
+            }
+        }
     }
 }

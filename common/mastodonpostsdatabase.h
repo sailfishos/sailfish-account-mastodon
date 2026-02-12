@@ -35,6 +35,7 @@ public:
                          const QList<QPair<QString, SocialPostImage::ImageType> > &images,
                          const QString &url, const QString &boostedBy,
                          int repliesCount, int favouritesCount, int reblogsCount,
+                         bool favourited, bool reblogged,
                          const QString &instanceUrl,
                          int account);
 
@@ -44,6 +45,8 @@ public:
     static int repliesCount(const SocialPost::ConstPtr &post);
     static int favouritesCount(const SocialPost::ConstPtr &post);
     static int reblogsCount(const SocialPost::ConstPtr &post);
+    static bool favourited(const SocialPost::ConstPtr &post);
+    static bool reblogged(const SocialPost::ConstPtr &post);
     static QString instanceUrl(const SocialPost::ConstPtr &post);
 };
 

@@ -1,6 +1,7 @@
 #include <QQmlExtensionPlugin>
 #include <QtQml>
 
+#include "mastodonpostactions.h"
 #include "mastodonpostsmodel.h"
 
 class JollaEventsviewMastodonPlugin : public QQmlExtensionPlugin
@@ -13,6 +14,7 @@ public:
     {
         Q_ASSERT(QLatin1String(uri) == QLatin1String("com.jolla.eventsview.mastodon"));
         qmlRegisterType<MastodonPostsModel>(uri, 1, 0, "MastodonPostsModel");
+        qmlRegisterType<MastodonPostActions>(uri, 1, 0, "MastodonPostActions");
     }
 };
 

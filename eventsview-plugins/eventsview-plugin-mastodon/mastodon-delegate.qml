@@ -25,6 +25,10 @@ SocialMediaAccountDelegate {
     dataType: SocialSync.Posts
     providerName: "mastodon"
 
+    MastodonPostActions {
+        id: mastodonPostActions
+    }
+
     model: MastodonPostsModel {
         onCountChanged: {
             if (count > 0) {
@@ -42,9 +46,12 @@ SocialMediaAccountDelegate {
         imageList: delegateItem.variantRole(model, ["images", "mediaAttachments", "media"])
         avatarSource: delegateItem.convertUrl(delegateItem.stringRole(model, ["icon", "avatar", "avatarUrl"]))
         fallbackAvatarSource: delegateItem.stringRole(model, ["icon", "avatar", "avatarUrl"])
-        accountId: model.accounts[0]
+        resolvedStatusUrl: delegateItem.statusUrl(model)
+        postId: delegateItem.stringRole(model, ["mastodonId", "statusId", "id", "twitterId"])
+        postActions: mastodonPostActions
+        accountId: delegateItem.firstAccountId(model)
 
-        onTriggered: Qt.openUrlExternally(delegateItem.statusUrl(model))
+        onTriggered: Qt.openUrlExternally(resolvedStatusUrl)
 
         Component.onCompleted: {
             refreshTimeCount = Qt.binding(function() { return delegateItem.refreshTimeCount })
@@ -163,5 +170,16 @@ SocialMediaAccountDelegate {
             return source.replace("_mini.", "_bigger.")
         }
         return source
+    }
+
+    function firstAccountId(modelData) {
+        var accounts = modelData.accounts
+        if (accounts && accounts.length > 0) {
+            var accountId = Number(accounts[0])
+            if (!isNaN(accountId)) {
+                return accountId
+            }
+        }
+        return -1
     }
 }

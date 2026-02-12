@@ -56,6 +56,7 @@ Sailfish OS account integration for Mastodon.
 
 - Events view shows Mastodon posts (not notification entries).
 - Events view post metadata line includes replies, favourites, and boosts alongside elapsed timestamp.
+- Long-pressing a Mastodon post reveals quick actions for favourite and boost, calling Mastodon API endpoints directly with account OAuth credentials.
 - System notifications are produced by `buteo-sync-plugin-mastodon-notifications`.
 - Notifications sync starts from Mastodon server marker (`notifications.last_read_id`) and uses local cursor dedupe via per-account `LastFetchedNotificationId`.
 - Each unread Mastodon notification is published as a separate Sailfish system notification.

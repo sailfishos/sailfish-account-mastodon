@@ -45,6 +45,8 @@ public:
         RepliesCount,
         FavouritesCount,
         ReblogsCount,
+        Favourited,
+        Reblogged,
         InstanceUrl,
         Accounts
     };

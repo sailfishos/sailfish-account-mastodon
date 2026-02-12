@@ -25,6 +25,8 @@ static const char *BOOSTED_BY_KEY = "boosted_by";
 static const char *REPLIES_COUNT_KEY = "replies_count";
 static const char *FAVOURITES_COUNT_KEY = "favourites_count";
 static const char *REBLOGS_COUNT_KEY = "reblogs_count";
+static const char *FAVOURITED_KEY = "favourited";
+static const char *REBLOGGED_KEY = "reblogged";
 static const char *INSTANCE_URL_KEY = "instance_url";
 
 MastodonPostsDatabase::MastodonPostsDatabase()
@@ -49,6 +51,8 @@ void MastodonPostsDatabase::addMastodonPost(
         int repliesCount,
         int favouritesCount,
         int reblogsCount,
+        bool favourited,
+        bool reblogged,
         const QString &instanceUrl,
         int account)
 {
@@ -59,6 +63,8 @@ void MastodonPostsDatabase::addMastodonPost(
     extra.insert(REPLIES_COUNT_KEY, repliesCount);
     extra.insert(FAVOURITES_COUNT_KEY, favouritesCount);
     extra.insert(REBLOGS_COUNT_KEY, reblogsCount);
+    extra.insert(FAVOURITED_KEY, favourited);
+    extra.insert(REBLOGGED_KEY, reblogged);
     extra.insert(INSTANCE_URL_KEY, instanceUrl);
     addPost(identifier, name, body, timestamp, icon, images, extra, account);
 }
@@ -109,6 +115,22 @@ int MastodonPostsDatabase::reblogsCount(const SocialPost::ConstPtr &post)
         return 0;
     }
     return post->extra().value(REBLOGS_COUNT_KEY).toInt();
+}
+
+bool MastodonPostsDatabase::favourited(const SocialPost::ConstPtr &post)
+{
+    if (post.isNull()) {
+        return false;
+    }
+    return post->extra().value(FAVOURITED_KEY).toBool();
+}
+
+bool MastodonPostsDatabase::reblogged(const SocialPost::ConstPtr &post)
+{
+    if (post.isNull()) {
+        return false;
+    }
+    return post->extra().value(REBLOGGED_KEY).toBool();
 }
 
 QString MastodonPostsDatabase::instanceUrl(const SocialPost::ConstPtr &post)

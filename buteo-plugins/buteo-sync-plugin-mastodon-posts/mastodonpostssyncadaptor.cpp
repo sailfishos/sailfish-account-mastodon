@@ -98,6 +98,8 @@ void MastodonPostsSyncAdaptor::purgeDataForOldAccount(int oldId, SocialNetworkSy
     m_db.removePosts(oldId);
     m_db.commit();
     m_db.wait();
+    m_db.refresh();
+    m_db.wait();
 
     purgeCachedImages(&m_imageCacheDb, oldId);
 }
@@ -113,6 +115,8 @@ void MastodonPostsSyncAdaptor::finalize(int accountId)
         qCInfo(lcSocialPlugin) << "sync aborted, won't commit database changes";
     } else {
         m_db.commit();
+        m_db.wait();
+        m_db.refresh();
         m_db.wait();
         purgeExpiredImages(&m_imageCacheDb, accountId);
     }
@@ -273,6 +277,8 @@ void MastodonPostsSyncAdaptor::finishedPostsHandler()
             const int repliesCount = postObject.value(QStringLiteral("replies_count")).toInt();
             const int favouritesCount = postObject.value(QStringLiteral("favourites_count")).toInt();
             const int reblogsCount = postObject.value(QStringLiteral("reblogs_count")).toInt();
+            const bool favourited = postObject.value(QStringLiteral("favourited")).toBool();
+            const bool reblogged = postObject.value(QStringLiteral("reblogged")).toBool();
 
             QList<QPair<QString, SocialPostImage::ImageType> > imageList;
             const QJsonArray mediaAttachments = postObject.value(QStringLiteral("media_attachments")).toArray();
@@ -310,6 +316,8 @@ void MastodonPostsSyncAdaptor::finishedPostsHandler()
                                 repliesCount,
                                 favouritesCount,
                                 reblogsCount,
+                                favourited,
+                                reblogged,
                                 apiHost(accountId),
                                 accountId);
         }

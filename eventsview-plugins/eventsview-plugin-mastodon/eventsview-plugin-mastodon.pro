@@ -5,9 +5,9 @@ TARGET = $$qtLibraryTarget($$TARGET)
 MODULENAME = com/jolla/eventsview/mastodon
 TARGETPATH = $$[QT_INSTALL_QML]/$$MODULENAME
 
-QT += qml
+QT += qml network
 CONFIG += plugin link_pkgconfig
-PKGCONFIG += socialcache
+PKGCONFIG += socialcache accounts-qt5 libsignon-qt5 sailfishaccounts
 
 include($$PWD/../../common/common.pri)
 
@@ -42,10 +42,12 @@ INSTALLS += ts_install engineering_english_install
 HEADERS += \
     abstractsocialcachemodel.h \
     abstractsocialcachemodel_p.h \
+    mastodonpostactions.h \
     mastodonpostsmodel.h
 
 SOURCES += \
     abstractsocialcachemodel.cpp \
+    mastodonpostactions.cpp \
     mastodonpostsmodel.cpp \
     plugin.cpp
 
