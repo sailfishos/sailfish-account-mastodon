@@ -46,7 +46,11 @@ SocialMediaFeedItem {
             _actionMenu.close()
         }
     }
-    onPressAndHold: {
+    onPressAndHold: function(mouse) {
+        if (mouse) {
+            mouse.accepted = true
+        }
+        Lipstick.compositor.eventsLayer.setHousekeeping(false)
         if (!housekeeping && !lockScreenActive) {
             _contextMenuOpen = false
             openActionMenu()

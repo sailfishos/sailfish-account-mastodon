@@ -19,14 +19,15 @@
 #ifndef MASTODONPOSTSMODEL_H
 #define MASTODONPOSTSMODEL_H
 
-#include "abstractsocialcachemodel.h"
+#include "mastodonpostsdatabase.h"
+#include <QtCore/QAbstractListModel>
+#include <QtCore/QMap>
 
-class MastodonPostsModelPrivate;
-
-class MastodonPostsModel: public AbstractSocialCacheModel
+class MastodonPostsModel: public QAbstractListModel
 {
     Q_OBJECT
     Q_PROPERTY(QVariantList accountIdFilter READ accountIdFilter WRITE setAccountIdFilter NOTIFY accountIdFilterChanged)
+    Q_PROPERTY(int count READ rowCount NOTIFY countChanged)
 
 public:
     enum MastodonPostsRole {
@@ -52,21 +53,27 @@ public:
     };
 
     explicit MastodonPostsModel(QObject *parent = 0);
-    QHash<int, QByteArray> roleNames() const;
+
+    int rowCount(const QModelIndex &parent = QModelIndex()) const override;
+    QVariant data(const QModelIndex &index, int role) const override;
+    QHash<int, QByteArray> roleNames() const override;
 
     QVariantList accountIdFilter() const;
     void setAccountIdFilter(const QVariantList &accountIds);
 
-    void refresh();
+    Q_INVOKABLE void refresh();
 
 signals:
     void accountIdFilterChanged();
+    void countChanged();
 
 private slots:
     void postsChanged();
 
 private:
-    Q_DECLARE_PRIVATE(MastodonPostsModel)
+    typedef QMap<int, QVariant> RowData;
+    QList<RowData> m_data;
+    MastodonPostsDatabase m_database;
 };
 
 #endif // MASTODONPOSTSMODEL_H

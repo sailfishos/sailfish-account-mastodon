@@ -1,8 +1,8 @@
 # Copyright (C) 2013-2026 Jolla Ltd.
 
 Name: sailfish-account-mastodon
-License: LGPLv2+
-Version: 0.1.0
+License: LGPLv3
+Version: 1.0.0
 Release: 1
 Source0: %{name}-%{version}.tar.bz2
 Summary: SailfishOS account plugin for Mastodon

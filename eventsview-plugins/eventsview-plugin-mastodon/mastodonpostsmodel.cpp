@@ -17,35 +17,55 @@
  */
 
 #include "mastodonpostsmodel.h"
-#include "abstractsocialcachemodel_p.h"
-#include "mastodonpostsdatabase.h"
-#include "postimagehelper_p.h"
+#include <QtCore/QVariantMap>
 
-class MastodonPostsModelPrivate: public AbstractSocialCacheModelPrivate
+namespace {
+
+static const char *URL_KEY = "url";
+static const char *TYPE_KEY = "type";
+static const char *TYPE_PHOTO = "photo";
+static const char *TYPE_VIDEO = "video";
+
+QVariantMap createImageData(const SocialPostImage::ConstPtr &image)
 {
-public:
-    explicit MastodonPostsModelPrivate(MastodonPostsModel *q);
+    QVariantMap imageData;
+    imageData.insert(QLatin1String(URL_KEY), image->url());
+    switch (image->type()) {
+    case SocialPostImage::Video:
+        imageData.insert(QLatin1String(TYPE_KEY), QLatin1String(TYPE_VIDEO));
+        break;
+    default:
+        imageData.insert(QLatin1String(TYPE_KEY), QLatin1String(TYPE_PHOTO));
+        break;
+    }
+    return imageData;
+}
 
-    MastodonPostsDatabase database;
-
-private:
-    Q_DECLARE_PUBLIC(MastodonPostsModel)
-};
-
-MastodonPostsModelPrivate::MastodonPostsModelPrivate(MastodonPostsModel *q)
-    : AbstractSocialCacheModelPrivate(q)
-{
 }
 
 MastodonPostsModel::MastodonPostsModel(QObject *parent)
-    : AbstractSocialCacheModel(*(new MastodonPostsModelPrivate(this)), parent)
+    : QAbstractListModel(parent)
 {
-    Q_D(MastodonPostsModel);
-
-    connect(&d->database, &AbstractSocialPostCacheDatabase::postsChanged,
+    connect(&m_database, &AbstractSocialPostCacheDatabase::postsChanged,
             this, &MastodonPostsModel::postsChanged);
-    connect(&d->database, SIGNAL(accountIdFilterChanged()),
+    connect(&m_database, SIGNAL(accountIdFilterChanged()),
             this, SIGNAL(accountIdFilterChanged()));
+}
+
+int MastodonPostsModel::rowCount(const QModelIndex &parent) const
+{
+    Q_UNUSED(parent)
+    return m_data.count();
+}
+
+QVariant MastodonPostsModel::data(const QModelIndex &index, int role) const
+{
+    const int row = index.row();
+    if (!index.isValid() || row < 0 || row >= m_data.count()) {
+        return QVariant();
+    }
+
+    return m_data.at(row).value(role);
 }
 
 QHash<int, QByteArray> MastodonPostsModel::roleNames() const
@@ -75,41 +95,33 @@ QHash<int, QByteArray> MastodonPostsModel::roleNames() const
 
 QVariantList MastodonPostsModel::accountIdFilter() const
 {
-    Q_D(const MastodonPostsModel);
-
-    return d->database.accountIdFilter();
+    return m_database.accountIdFilter();
 }
 
 void MastodonPostsModel::setAccountIdFilter(const QVariantList &accountIds)
 {
-    Q_D(MastodonPostsModel);
-
-    d->database.setAccountIdFilter(accountIds);
+    m_database.setAccountIdFilter(accountIds);
 }
 
 void MastodonPostsModel::refresh()
 {
-    Q_D(MastodonPostsModel);
-
-    d->database.refresh();
+    m_database.refresh();
 }
 
 void MastodonPostsModel::postsChanged()
 {
-    Q_D(MastodonPostsModel);
-
-    SocialCacheModelData data;
-    QList<SocialPost::ConstPtr> postsData = d->database.posts();
+    QList<RowData> data;
+    QList<SocialPost::ConstPtr> postsData = m_database.posts();
     Q_FOREACH (const SocialPost::ConstPtr &post, postsData) {
-        QMap<int, QVariant> eventMap;
-        const QString accountName = d->database.accountName(post);
-        const QString postUrl = d->database.url(post);
-        const QString boostedBy = d->database.boostedBy(post);
-        const int repliesCount = d->database.repliesCount(post);
-        const int favouritesCount = d->database.favouritesCount(post);
-        const int reblogsCount = d->database.reblogsCount(post);
-        const bool favourited = d->database.favourited(post);
-        const bool reblogged = d->database.reblogged(post);
+        RowData eventMap;
+        const QString accountName = m_database.accountName(post);
+        const QString postUrl = m_database.url(post);
+        const QString boostedBy = m_database.boostedBy(post);
+        const int repliesCount = m_database.repliesCount(post);
+        const int favouritesCount = m_database.favouritesCount(post);
+        const int reblogsCount = m_database.reblogsCount(post);
+        const bool favourited = m_database.favourited(post);
+        const bool reblogged = m_database.reblogged(post);
 
         eventMap.insert(MastodonPostsModel::MastodonId, post->identifier());
         eventMap.insert(MastodonPostsModel::Name, post->name());
@@ -127,7 +139,7 @@ void MastodonPostsModel::postsChanged()
         eventMap.insert(MastodonPostsModel::ReblogsCount, reblogsCount);
         eventMap.insert(MastodonPostsModel::Favourited, favourited);
         eventMap.insert(MastodonPostsModel::Reblogged, reblogged);
-        eventMap.insert(MastodonPostsModel::InstanceUrl, d->database.instanceUrl(post));
+        eventMap.insert(MastodonPostsModel::InstanceUrl, m_database.instanceUrl(post));
 
         QVariantList images;
         Q_FOREACH (const SocialPostImage::ConstPtr &image, post->images()) {
@@ -143,5 +155,11 @@ void MastodonPostsModel::postsChanged()
         data.append(eventMap);
     }
 
-    updateData(data);
+    const int oldCount = m_data.count();
+    beginResetModel();
+    m_data = data;
+    endResetModel();
+    if (oldCount != m_data.count()) {
+        emit countChanged();
+    }
 }

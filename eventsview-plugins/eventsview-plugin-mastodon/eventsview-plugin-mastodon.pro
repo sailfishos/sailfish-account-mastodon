@@ -40,13 +40,10 @@ PRE_TARGETDEPS += ts engineering_english
 INSTALLS += ts_install engineering_english_install
 
 HEADERS += \
-    abstractsocialcachemodel.h \
-    abstractsocialcachemodel_p.h \
     mastodonpostactions.h \
     mastodonpostsmodel.h
 
 SOURCES += \
-    abstractsocialcachemodel.cpp \
     mastodonpostactions.cpp \
     mastodonpostsmodel.cpp \
     plugin.cpp
