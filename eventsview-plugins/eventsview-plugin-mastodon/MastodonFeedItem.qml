@@ -30,6 +30,7 @@ SocialMediaFeedItem {
     property bool isReblogged: _rebloggedOverride >= 0 ? _rebloggedOverride === 1 : reblogged
     readonly property bool housekeeping: Lipstick.compositor.eventsLayer.housekeeping
     readonly property bool lockScreenActive: Lipstick.compositor.lockScreenLayer.deviceIsLocked
+    property bool _pendingOpenActionMenu: false
     property bool _contextMenuOpen: false
     property var _actionMenu
     property real _contextMenuHeight: (_contextMenuOpen && _actionMenu) ? _actionMenu.height : 0
@@ -50,10 +51,15 @@ SocialMediaFeedItem {
         if (mouse) {
             mouse.accepted = true
         }
-        Lipstick.compositor.eventsLayer.setHousekeeping(false)
-        if (!housekeeping && !lockScreenActive) {
-            _contextMenuOpen = false
-            openActionMenu()
+        _pendingOpenActionMenu = !lockScreenActive
+                                 && postActions
+                                 && actionPostId().length > 0
+                                 && actionAccountId() >= 0
+        openActionMenuTimer.restart()
+    }
+    onHousekeepingChanged: {
+        if (housekeeping && _pendingOpenActionMenu) {
+            Lipstick.compositor.eventsLayer.setHousekeeping(false)
         }
     }
     Component.onDestruction: {
@@ -419,6 +425,25 @@ SocialMediaFeedItem {
                     }
                 }
             }
+        }
+    }
+
+    Timer {
+        id: openActionMenuTimer
+
+        interval: 0
+        repeat: false
+        onTriggered: {
+            if (item.lockScreenActive) {
+                item._pendingOpenActionMenu = false
+                return
+            }
+            Lipstick.compositor.eventsLayer.setHousekeeping(false)
+            if (item._pendingOpenActionMenu) {
+                item._contextMenuOpen = false
+                item.openActionMenu()
+            }
+            item._pendingOpenActionMenu = false
         }
     }
 }
