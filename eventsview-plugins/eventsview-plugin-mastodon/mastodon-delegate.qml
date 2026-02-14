@@ -46,7 +46,7 @@ SocialMediaAccountDelegate {
         imageList: delegateItem.variantRole(model, ["images", "mediaAttachments", "media"])
         avatarSource: delegateItem.convertUrl(delegateItem.stringRole(model, ["icon", "avatar", "avatarUrl"]))
         fallbackAvatarSource: delegateItem.stringRole(model, ["icon", "avatar", "avatarUrl"])
-        resolvedStatusUrl: delegateItem.statusUrl(model)
+        resolvedStatusUrl: delegateItem.authorizeInteractionUrl(model)
         postId: delegateItem.stringRole(model, ["mastodonId", "statusId", "id", "twitterId"])
         postActions: mastodonPostActions
         accountId: delegateItem.firstAccountId(model)
@@ -161,6 +161,35 @@ SocialMediaAccountDelegate {
         }
 
         return instanceUrl + "/explore"
+    }
+
+    function authorizeInteractionUrl(modelData) {
+        var targetUrl = statusUrl(modelData)
+        if (targetUrl.length === 0) {
+            return targetUrl
+        }
+
+        var instanceUrl = stringRole(modelData, ["instanceUrl", "serverUrl", "baseUrl"])
+        if (instanceUrl.length === 0) {
+            return targetUrl
+        }
+        while (instanceUrl.length > 0 && instanceUrl.charAt(instanceUrl.length - 1) === "/") {
+            instanceUrl = instanceUrl.slice(0, instanceUrl.length - 1)
+        }
+
+        // Links on the user's own instance should open directly.
+        var sameServer = /^([a-z][a-z0-9+.-]*):\/\/([^\/?#]+)/i
+        var targetMatch = targetUrl.match(sameServer)
+        var instanceMatch = instanceUrl.match(sameServer)
+        if (targetMatch && instanceMatch
+                && targetMatch.length > 2
+                && instanceMatch.length > 2
+                && targetMatch[1].toLowerCase() === instanceMatch[1].toLowerCase()
+                && targetMatch[2].toLowerCase() === instanceMatch[2].toLowerCase()) {
+            return targetUrl
+        }
+
+        return instanceUrl + "/authorize_interaction?uri=" + encodeURIComponent(targetUrl)
     }
 
     function convertUrl(source) {

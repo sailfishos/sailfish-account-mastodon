@@ -143,6 +143,34 @@ namespace {
         return hasActiveNotifications;
     }
 
+    QString authorizeInteractionUrl(const QString &apiHost, const QString &targetUrl)
+    {
+        const QUrl parsedApiHost(apiHost);
+        const QUrl parsedTargetUrl(targetUrl);
+        if (!parsedApiHost.isValid()
+                || parsedApiHost.scheme().isEmpty()
+                || parsedApiHost.host().isEmpty()
+                || !parsedTargetUrl.isValid()
+                || parsedTargetUrl.scheme().isEmpty()
+                || parsedTargetUrl.host().isEmpty()) {
+            return targetUrl;
+        }
+
+        // Links on the account's own instance should open directly.
+        const bool sameScheme = QString::compare(parsedApiHost.scheme(), parsedTargetUrl.scheme(), Qt::CaseInsensitive) == 0;
+        const bool sameHost = QString::compare(parsedApiHost.host(), parsedTargetUrl.host(), Qt::CaseInsensitive) == 0;
+        const int apiPort = parsedApiHost.port(parsedApiHost.scheme() == QLatin1String("https") ? 443 : 80);
+        const int targetPort = parsedTargetUrl.port(parsedTargetUrl.scheme() == QLatin1String("https") ? 443 : 80);
+        if (sameScheme && sameHost && apiPort == targetPort) {
+            return targetUrl;
+        }
+
+        QUrl authorizeUrl(parsedApiHost);
+        authorizeUrl.setPath(QStringLiteral("/authorize_interaction"));
+        authorizeUrl.setQuery(QStringLiteral("uri=") + QString::fromUtf8(QUrl::toPercentEncoding(targetUrl)));
+        return authorizeUrl.toString();
+    }
+
 }
 
 MastodonNotificationsSyncAdaptor::MastodonNotificationsSyncAdaptor(QObject *parent)
@@ -655,7 +683,7 @@ void MastodonNotificationsSyncAdaptor::publishSystemNotification(int accountId,
             && !parsedOpenUrl.host().isEmpty()
             ? openUrl
             : fallbackUrl;
-    notification->setRemoteAction(OPEN_URL_ACTION(safeOpenUrl));
+    notification->setRemoteAction(OPEN_URL_ACTION(authorizeInteractionUrl(apiHost(accountId), safeOpenUrl)));
     notification->publish();
     if (notification->replacesId() == 0) {
         qCWarning(lcSocialPlugin) << "failed to publish Mastodon notification"
