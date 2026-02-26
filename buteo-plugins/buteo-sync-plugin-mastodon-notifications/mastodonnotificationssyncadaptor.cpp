@@ -120,9 +120,87 @@ namespace {
             return QStringLiteral("posted");
         } else if (type == QLatin1String("update")) {
             return QStringLiteral("updated a post");
+        } else if (type == QLatin1String("admin.sign_up")) {
+            return QStringLiteral("signed up");
+        } else if (type == QLatin1String("admin.report")) {
+            return QStringLiteral("reported an account");
+        } else if (type == QLatin1String("moderation_warning")) {
+            return QStringLiteral("received a moderation warning");
+        } else if (type == QLatin1String("quote")) {
+            return QStringLiteral("quoted your post");
+        } else if (type == QLatin1String("quoted_update")) {
+            return QStringLiteral("updated a post that quoted you");
         }
 
         return QStringLiteral("sent you a notification");
+    }
+
+    bool useSystemSummary(const QString &notificationType)
+    {
+        return notificationType == QLatin1String("severed_relationships")
+                || notificationType == QLatin1String("moderation_warning");
+    }
+
+    QString severedRelationshipsText(const QJsonObject &eventObject)
+    {
+        const QString eventType = eventObject.value(QStringLiteral("type")).toString();
+        const QString targetName = eventObject.value(QStringLiteral("target_name")).toString().trimmed();
+        const int followersCount = eventObject.value(QStringLiteral("followers_count")).toInt();
+        const int followingCount = eventObject.value(QStringLiteral("following_count")).toInt();
+
+        QString action;
+        if (eventType == QLatin1String("domain_block")) {
+            action = targetName.isEmpty()
+                    ? QStringLiteral("An admin blocked an instance")
+                    : QStringLiteral("An admin blocked %1").arg(targetName);
+        } else if (eventType == QLatin1String("user_domain_block")) {
+            action = targetName.isEmpty()
+                    ? QStringLiteral("You blocked an instance")
+                    : QStringLiteral("You blocked %1").arg(targetName);
+        } else if (eventType == QLatin1String("account_suspension")) {
+            action = targetName.isEmpty()
+                    ? QStringLiteral("An account was suspended")
+                    : QStringLiteral("%1 was suspended").arg(targetName);
+        } else {
+            action = QStringLiteral("Some follow relationships were severed");
+        }
+
+        const int affectedCount = followersCount + followingCount;
+        if (affectedCount <= 0) {
+            return action;
+        }
+
+        return QStringLiteral("%1 (%2 followers, %3 following removed)")
+                .arg(action)
+                .arg(followersCount)
+                .arg(followingCount);
+    }
+
+    QString moderationWarningText(const QJsonObject &warningObject)
+    {
+        const QString warningText = warningObject.value(QStringLiteral("text")).toString().trimmed();
+        if (!warningText.isEmpty()) {
+            return warningText;
+        }
+
+        const QString action = warningObject.value(QStringLiteral("action")).toString();
+        if (action == QLatin1String("none")) {
+            return QStringLiteral("A moderator sent you a warning");
+        } else if (action == QLatin1String("disable")) {
+            return QStringLiteral("A moderator disabled your account");
+        } else if (action == QLatin1String("mark_statuses_as_sensitive")) {
+            return QStringLiteral("A moderator marked specific posts as sensitive");
+        } else if (action == QLatin1String("delete_statuses")) {
+            return QStringLiteral("A moderator deleted specific posts");
+        } else if (action == QLatin1String("sensitive")) {
+            return QStringLiteral("A moderator marked all your posts as sensitive");
+        } else if (action == QLatin1String("silence")) {
+            return QStringLiteral("A moderator limited your account");
+        } else if (action == QLatin1String("suspend")) {
+            return QStringLiteral("A moderator suspended your account");
+        }
+
+        return QString();
     }
 
     bool hasActiveNotificationsForAccount(int accountId)
@@ -530,6 +608,8 @@ void MastodonNotificationsSyncAdaptor::finishedNotificationsHandler()
             const QJsonObject statusObject = statusValue.isObject() && !statusValue.isNull()
                     ? statusValue.toObject()
                     : QJsonObject();
+            const QJsonObject eventObject = notificationObject.value(QStringLiteral("event")).toObject();
+            const QJsonObject warningObject = notificationObject.value(QStringLiteral("moderation_warning")).toObject();
 
             QDateTime eventTimestamp = parseTimestamp(notificationObject.value(QStringLiteral("created_at")).toString());
             if (!eventTimestamp.isValid()) {
@@ -545,9 +625,18 @@ void MastodonNotificationsSyncAdaptor::finishedNotificationsHandler()
             const QString statusBody = sanitizeContent(statusObject.value(QStringLiteral("content")).toString());
             const QString action = actionText(notificationType);
             QString body;
-            if (notificationType == QLatin1String("mention")
+            if (notificationType == QLatin1String("severed_relationships")) {
+                body = severedRelationshipsText(eventObject);
+            } else if (notificationType == QLatin1String("moderation_warning")) {
+                const QString warningText = moderationWarningText(warningObject);
+                body = warningText.isEmpty()
+                        ? action
+                        : QStringLiteral("%1: %2").arg(action, warningText);
+            } else if (notificationType == QLatin1String("mention")
                     || notificationType == QLatin1String("status")
-                    || notificationType == QLatin1String("update")) {
+                    || notificationType == QLatin1String("update")
+                    || notificationType == QLatin1String("quote")
+                    || notificationType == QLatin1String("quoted_update")) {
                 body = statusBody.isEmpty() ? action : statusBody;
             } else {
                 body = statusBody.isEmpty() ? action : QStringLiteral("%1: %2").arg(action, statusBody);
@@ -567,10 +656,15 @@ void MastodonNotificationsSyncAdaptor::finishedNotificationsHandler()
             } else if (url.isEmpty() && !accountName.isEmpty()) {
                 url = QStringLiteral("%1/@%2").arg(apiHost(accountId), accountName);
             }
+            if (useSystemSummary(notificationType)) {
+                url.clear();
+            }
 
             PendingNotification pendingNotification;
             pendingNotification.notificationId = notificationId;
-            pendingNotification.summary = displayName;
+            pendingNotification.summary = useSystemSummary(notificationType)
+                    ? QStringLiteral("Mastodon")
+                    : displayName;
             pendingNotification.body = body;
             pendingNotification.link = url;
             pendingNotification.timestamp = eventTimestamp;
