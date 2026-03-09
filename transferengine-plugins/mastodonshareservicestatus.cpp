@@ -186,7 +186,7 @@ void MastodonShareServiceStatus::queryStatus(QueryStatusMode mode)
 
     bool signInActive = false;
     Q_FOREACH (Accounts::AccountId id, m_accountManager->accountList()) {
-        Accounts::Account *acc = m_accountManager->account(id);
+        Accounts::Account *acc = Accounts::Account::fromId(m_accountManager, id, this);
 
         if (!acc) {
             qWarning() << Q_FUNC_INFO << "Failed to get account for id:" << id;
@@ -206,6 +206,7 @@ void MastodonShareServiceStatus::queryStatus(QueryStatusMode mode)
         }
 
         if (!service.isValid() || !serviceFound) {
+            acc->deleteLater();
             continue;
         }
 
@@ -214,12 +215,14 @@ void MastodonShareServiceStatus::queryStatus(QueryStatusMode mode)
         const bool shareServiceEnabled = acc->enabled();
         if (!accountEnabled || !shareServiceEnabled) {
             acc->selectService(Accounts::Service());
+            acc->deleteLater();
             continue;
         }
 
         if (acc->value(QStringLiteral("CredentialsNeedUpdate")).toBool()) {
             qWarning() << Q_FUNC_INFO << "Credentials need update for account id:" << id;
             acc->selectService(Accounts::Service());
+            acc->deleteLater();
             continue;
         }
 
@@ -256,6 +259,7 @@ void MastodonShareServiceStatus::queryStatus(QueryStatusMode mode)
         }
 
         acc->selectService(Accounts::Service());
+        acc->deleteLater();
     }
 
     if (!signInActive) {

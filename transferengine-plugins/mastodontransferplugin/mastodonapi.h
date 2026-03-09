@@ -49,11 +49,11 @@ private Q_SLOTS:
     void uploadProgress(qint64 received, qint64 total);
 
 private:
-    static QString normalizeApiHost(const QString &rawHost);
     bool postStatusInternal(const QString &mediaId);
     void finishTransfer(QNetworkReply::NetworkError error, int httpCode, const QByteArray &data);
 
     QMap<QNetworkReply*, API_CALL> m_replies;
+    bool m_cancelRequested;
     QNetworkAccessManager *m_qnam;
     QString m_accessToken;
     QString m_apiHost;

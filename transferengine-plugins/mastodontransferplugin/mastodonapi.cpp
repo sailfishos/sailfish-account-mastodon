@@ -3,6 +3,7 @@
  */
 
 #include "mastodonapi.h"
+#include "mastodonauthutils.h"
 
 #include <QtCore/QFile>
 #include <QtCore/QFileInfo>
@@ -18,39 +19,13 @@
 
 MastodonApi::MastodonApi(QNetworkAccessManager *qnam, QObject *parent)
     : QObject(parent)
+    , m_cancelRequested(false)
     , m_qnam(qnam)
 {
 }
 
 MastodonApi::~MastodonApi()
 {
-}
-
-QString MastodonApi::normalizeApiHost(const QString &rawHost)
-{
-    QString host = rawHost.trimmed();
-    if (host.isEmpty()) {
-        host = QStringLiteral("https://mastodon.social");
-    }
-
-    if (!host.startsWith(QLatin1String("https://"))
-            && !host.startsWith(QLatin1String("http://"))) {
-        host.prepend(QStringLiteral("https://"));
-    }
-
-    QUrl url(host);
-    if (!url.isValid() || url.host().isEmpty()) {
-        return QStringLiteral("https://mastodon.social");
-    }
-
-    QString normalized = QString::fromLatin1(url.toEncoded(QUrl::RemovePath
-                                                            | QUrl::RemoveQuery
-                                                            | QUrl::RemoveFragment));
-    if (normalized.endsWith(QLatin1Char('/'))) {
-        normalized.chop(1);
-    }
-
-    return normalized;
 }
 
 bool MastodonApi::uploadImage(const QString &filePath,
@@ -65,7 +40,8 @@ bool MastodonApi::uploadImage(const QString &filePath,
         return false;
     }
 
-    m_apiHost = normalizeApiHost(apiHost);
+    m_cancelRequested = false;
+    m_apiHost = MastodonAuthUtils::normalizeApiHost(apiHost);
     m_accessToken = accessToken;
     m_statusText = statusText;
 
@@ -116,7 +92,8 @@ bool MastodonApi::postStatus(const QString &statusText,
                              const QString &apiHost,
                              const QString &accessToken)
 {
-    m_apiHost = normalizeApiHost(apiHost);
+    m_cancelRequested = false;
+    m_apiHost = MastodonAuthUtils::normalizeApiHost(apiHost);
     m_accessToken = accessToken;
     m_statusText = statusText;
 
@@ -172,11 +149,11 @@ void MastodonApi::cancelUpload()
         return;
     }
 
+    m_cancelRequested = true;
     const QList<QNetworkReply*> replies = m_replies.keys();
     Q_FOREACH (QNetworkReply *reply, replies) {
         reply->abort();
     }
-    m_replies.clear();
 }
 
 void MastodonApi::replyError(QNetworkReply::NetworkError error)
@@ -204,6 +181,14 @@ void MastodonApi::finished()
     const QNetworkReply::NetworkError error = reply->error();
 
     reply->deleteLater();
+
+    if (m_cancelRequested && error == QNetworkReply::OperationCanceledError) {
+        if (m_replies.isEmpty()) {
+            m_cancelRequested = false;
+            emit transferCanceled();
+        }
+        return;
+    }
 
     if (apiCall == UPLOAD_MEDIA) {
         if (error != QNetworkReply::NoError || httpCode < 200 || httpCode >= 300) {
@@ -241,6 +226,8 @@ void MastodonApi::finished()
 
 void MastodonApi::finishTransfer(QNetworkReply::NetworkError error, int httpCode, const QByteArray &data)
 {
+    m_cancelRequested = false;
+
     if (httpCode == 401) {
         emit credentialsExpired();
     }

@@ -11,6 +11,7 @@ TARGET = $$qtLibraryTarget($$TARGET)
 
 HEADERS += \
     $$PWD/mastodonauthutils.h \
+    $$PWD/mastodontextutils.h \
     $$PWD/mastodonpostsdatabase.h
 
 SOURCES += \

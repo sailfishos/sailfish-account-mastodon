@@ -20,11 +20,11 @@
 
 #include "mastodonnotificationssyncadaptor.h"
 #include "trace.h"
+#include "mastodontextutils.h"
 
 #include <QtCore/QJsonArray>
 #include <QtCore/QJsonObject>
 #include <QtCore/QJsonValue>
-#include <QtCore/QRegularExpression>
 #include <QtCore/QUrl>
 #include <QtCore/QUrlQuery>
 #include <QtNetwork/QNetworkRequest>
@@ -54,38 +54,6 @@ namespace {
     const char *const NotificationIdHint = "x-nemo.sociald.notification-id";
     const char *const LastFetchedNotificationIdKey = "LastFetchedNotificationId";
     const int NotificationsPageLimit = 80;
-
-    QString decodeHtmlEntities(QString text)
-    {
-        text.replace(QStringLiteral("&quot;"), QStringLiteral("\""));
-        text.replace(QStringLiteral("&apos;"), QStringLiteral("'"));
-        text.replace(QStringLiteral("&lt;"), QStringLiteral("<"));
-        text.replace(QStringLiteral("&gt;"), QStringLiteral(">"));
-        text.replace(QStringLiteral("&amp;"), QStringLiteral("&"));
-        text.replace(QStringLiteral("&nbsp;"), QStringLiteral(" "));
-
-        static const QRegularExpression decimalEntity(QStringLiteral("&#(\\d+);"));
-        QRegularExpressionMatch match;
-        int index = 0;
-        while ((index = text.indexOf(decimalEntity, index, &match)) != -1) {
-            const uint value = match.captured(1).toUInt();
-            const QString replacement = value > 0 ? QString(QChar(value)) : QString();
-            text.replace(index, match.capturedLength(0), replacement);
-            index += replacement.size();
-        }
-
-        static const QRegularExpression hexEntity(QStringLiteral("&#x([0-9a-fA-F]+);"));
-        index = 0;
-        while ((index = text.indexOf(hexEntity, index, &match)) != -1) {
-            bool ok = false;
-            const uint value = match.captured(1).toUInt(&ok, 16);
-            const QString replacement = ok && value > 0 ? QString(QChar(value)) : QString();
-            text.replace(index, match.capturedLength(0), replacement);
-            index += replacement.size();
-        }
-
-        return text;
-    }
 
     QString displayNameForAccount(const QJsonObject &account)
     {
@@ -292,52 +260,12 @@ void MastodonNotificationsSyncAdaptor::finalize(int accountId)
 
 QString MastodonNotificationsSyncAdaptor::sanitizeContent(const QString &content)
 {
-    QString plain = content;
-    plain.replace(QRegularExpression(QStringLiteral("<\\s*br\\s*/?\\s*>"), QRegularExpression::CaseInsensitiveOption), QStringLiteral("\n"));
-    plain.replace(QRegularExpression(QStringLiteral("<\\s*/\\s*p\\s*>"), QRegularExpression::CaseInsensitiveOption), QStringLiteral("\n"));
-    plain.remove(QRegularExpression(QStringLiteral("<[^>]+>"), QRegularExpression::CaseInsensitiveOption));
-
-    return decodeHtmlEntities(plain).trimmed();
+    return MastodonTextUtils::sanitizeContent(content);
 }
 
 QDateTime MastodonNotificationsSyncAdaptor::parseTimestamp(const QString &timestampString)
 {
-    QDateTime timestamp;
-
-#if QT_VERSION >= QT_VERSION_CHECK(5, 8, 0)
-    timestamp = QDateTime::fromString(timestampString, Qt::ISODateWithMs);
-    if (timestamp.isValid()) {
-        return timestamp;
-    }
-#endif
-
-    timestamp = QDateTime::fromString(timestampString, Qt::ISODate);
-    if (timestamp.isValid()) {
-        return timestamp;
-    }
-
-    const int timeSeparator = timestampString.indexOf(QLatin1Char('T'));
-    const int fractionSeparator = timestampString.indexOf(QLatin1Char('.'), timeSeparator + 1);
-    if (timeSeparator > -1 && fractionSeparator > -1) {
-        int timezoneSeparator = timestampString.indexOf(QLatin1Char('Z'), fractionSeparator + 1);
-        if (timezoneSeparator == -1) {
-            timezoneSeparator = timestampString.indexOf(QLatin1Char('+'), fractionSeparator + 1);
-        }
-        if (timezoneSeparator == -1) {
-            timezoneSeparator = timestampString.indexOf(QLatin1Char('-'), fractionSeparator + 1);
-        }
-
-        QString stripped = timestampString;
-        if (timezoneSeparator > -1) {
-            stripped.remove(fractionSeparator, timezoneSeparator - fractionSeparator);
-        } else {
-            stripped.truncate(fractionSeparator);
-        }
-
-        timestamp = QDateTime::fromString(stripped, Qt::ISODate);
-    }
-
-    return timestamp;
+    return MastodonTextUtils::parseTimestamp(timestampString);
 }
 
 int MastodonNotificationsSyncAdaptor::compareNotificationIds(const QString &left, const QString &right)
@@ -445,6 +373,11 @@ void MastodonNotificationsSyncAdaptor::finishedUnreadMarkerHandler()
     if (isError || !ok) {
         qCWarning(lcSocialPlugin) << "unable to parse notifications marker data from request with account"
                                   << accountId << ", got:" << QString::fromUtf8(replyData);
+        PendingSyncState fallbackState;
+        fallbackState.accessToken = accessToken;
+        fallbackState.lastFetchedId = loadLastFetchedId(accountId);
+        m_pendingSyncStates.insert(accountId, fallbackState);
+        requestNotifications(accountId, accessToken, fallbackState.lastFetchedId);
         decrementSemaphore(accountId);
         return;
     }
@@ -671,12 +604,15 @@ void MastodonNotificationsSyncAdaptor::finishedNotificationsHandler()
             state.pendingNotifications.insert(notificationId, pendingNotification);
         }
 
+        const QString historyBoundaryId = !state.unreadFloorId.isEmpty()
+                ? state.unreadFloorId
+                : state.lastFetchedId;
         if (notifications.size() >= NotificationsPageLimit
                 && !pageMinNotificationId.isEmpty()
-                && (state.unreadFloorId.isEmpty()
-                    || compareNotificationIds(pageMinNotificationId, state.unreadFloorId) > 0)) {
+                && !historyBoundaryId.isEmpty()
+                && compareNotificationIds(pageMinNotificationId, historyBoundaryId) > 0) {
             m_pendingSyncStates.insert(accountId, state);
-            requestNotifications(accountId, state.accessToken, state.unreadFloorId, pageMinNotificationId);
+            requestNotifications(accountId, state.accessToken, historyBoundaryId, pageMinNotificationId);
             decrementSemaphore(accountId);
             return;
         }
