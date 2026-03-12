@@ -6,6 +6,7 @@
 
 import QtQuick 2.0
 import Sailfish.Silica 1.0
+import Sailfish.Share 1.0
 import Sailfish.TextLinking 1.0
 import org.nemomobile.lipstick 0.1
 import "shared"
@@ -35,10 +36,31 @@ SocialMediaFeedItem {
     property var _actionMenu
     property real _contextMenuHeight: (_contextMenuOpen && _actionMenu) ? _actionMenu.height : 0
 
-    property string _booster: item.stringValue("boostedBy", "rebloggedBy", "retweeter")
-    property string _displayName: item.stringValue("name", "displayName", "display_name")
-    property string _accountName: item.stringValue("accountName", "acct", "screenName", "username")
-    property string _bodyText: item.stringValue("body", "content", "text")
+    property string _booster: model && model.boostedBy ? model.boostedBy.toString() : ""
+    property string _displayName: model && model.name ? model.name.toString() : ""
+    property string _accountName: model && model.accountName ? model.accountName.toString() : ""
+    property string _bodyText: model && model.body ? model.body.toString() : ""
+    //: Action label shown in Mastodon interaction menu.
+    //% "Favourite"
+    readonly property string _favouriteActionText: qsTrId("lipstick-jolla-home-la-mastodon_favourite")
+    //: Action label shown in Mastodon interaction menu when the post is already favourited.
+    //% "Unfavourite"
+    readonly property string _unfavouriteActionText: qsTrId("lipstick-jolla-home-la-mastodon_unfavourite")
+    //: Action label shown in Mastodon interaction menu.
+    //% "Boost"
+    readonly property string _boostActionText: qsTrId("lipstick-jolla-home-la-mastodon_boost")
+    //: Action label shown in Mastodon interaction menu when the post is already boosted.
+    //% "Undo boost"
+    readonly property string _unboostActionText: qsTrId("lipstick-jolla-home-la-mastodon_unboost")
+    //: Action label shown in Mastodon interaction menu.
+    //% "Share"
+    readonly property string _shareActionText: qsTrId("lipstick-jolla-home-la-mastodon_share")
+    //: Link title used when sharing a Mastodon post.
+    //% "Post from Mastodon"
+    readonly property string _shareLinkTitle: qsTrId("lipstick-jolla-home-la-mastodon_share_link_title")
+    property var _shareAction: ShareAction {
+        title: item._shareActionText
+    }
 
     timestamp: model.timestamp
     onRefreshTimeCountChanged: formattedTime = Format.formatDate(model.timestamp, Format.TimeElapsed)
@@ -257,6 +279,10 @@ SocialMediaFeedItem {
         return isNaN(parsed) ? -1 : parsed
     }
 
+    function shareStatusUrl() {
+        return model && model.url ? model.url.toString() : ""
+    }
+
     function topLevelParent() {
         var p = item
         while (p && p.parent) {
@@ -318,6 +344,38 @@ SocialMediaFeedItem {
             property bool menuOpen: height > 0
             property bool wasOpened: false
             z: 10000
+            mapSourceItem: _contentColumn
+            actionEnabled: item.postActions
+                           && item.actionPostId().length > 0
+                           && item.actionAccountId() >= 0
+                           && !item.lockScreenActive
+                           && !item.housekeeping
+            interactionItems: [
+                {
+                    name: "like",
+                    // U+2605 BLACK STAR
+                    symbol: "\u2605",
+                    active: item.isFavourited,
+                    inactiveText: item._favouriteActionText,
+                    activeText: item._unfavouriteActionText
+                },
+                {
+                    name: "reblog",
+                    // U+21BB CLOCKWISE OPEN CIRCLE ARROW
+                    symbol: "\u21BB",
+                    active: item.isReblogged,
+                    inactiveText: item._boostActionText,
+                    activeText: item._unboostActionText
+                },
+                {
+                    name: "share",
+                    // U+260D OPPOSITION (ironic doncha think)
+                    symbol: "\u260D",
+                    active: false,
+                    inactiveText: item._shareActionText,
+                    activeText: item._shareActionText
+                }
+            ]
 
             onPositionChanged: {
                 horizontalActions.xPos = _contentColumn.mapFromItem(actionMenu, mouse.x, mouse.y).x
@@ -423,6 +481,17 @@ SocialMediaFeedItem {
                                      ? Theme.secondaryHighlightColor : Theme.primaryColor))
                                : Theme.rgba(Theme.secondaryColor, 0.4)
                     }
+                } else if (actionName === "share") {
+                    var shareUrl = item.shareStatusUrl()
+                    if (shareUrl.length === 0) {
+                        return
+                    }
+                    item._shareAction.resources = [{
+                        "data": shareUrl,
+                        "linkTitle": item._shareLinkTitle,
+                        "type": "text/x-url"
+                    }]
+                    item._shareAction.trigger()
                 }
             }
         }
