@@ -175,7 +175,8 @@ AccountCredentialsAgent {
         var clientId = _valueFromServiceConfig(config, "auth/oauth2/web_server/ClientId")
         var clientSecret = _valueFromServiceConfig(config, "auth/oauth2/web_server/ClientSecret")
         if (clientId.length === 0 || clientSecret.length === 0) {
-            credentialsUpdateError("Missing Mastodon OAuth client credentials")
+            //% "Missing Mastodon OAuth client credentials"
+            credentialsUpdateError(qsTrId("settings-accounts-mastodon-la-missing_client_credentials"))
             return
         }
 

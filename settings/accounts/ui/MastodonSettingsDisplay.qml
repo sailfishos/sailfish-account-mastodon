@@ -37,7 +37,8 @@ StandardAccountSettingsDisplay {
         var providerDisplayName = root.accountProvider && root.accountProvider.displayName
                 ? root.accountProvider.displayName.toString().trim()
                 : ""
-        return providerDisplayName.length > 0 ? providerDisplayName : "Mastodon"
+        //% "Mastodon"
+        return providerDisplayName.length > 0 ? providerDisplayName : qsTrId("settings-accounts-mastodon-la-provider_name")
     }
 
     onAboutToSaveAccount: {
@@ -106,10 +107,20 @@ StandardAccountSettingsDisplay {
             id: syncServicesRepeater
             TextSwitch {
                 checked: model.enabled
-                text: model.displayName
+                text: model.serviceName === "mastodon-microblog"
+                        //% "Posts"
+                        ? qsTrId("settings-accounts-mastodon-la-service_posts")
+                        : (model.serviceName === "mastodon-notifications"
+                           //% "Notifications"
+                           ? qsTrId("settings-accounts-mastodon-la-service_notifications")
+                           : model.displayName)
                 description: model.serviceName === "mastodon-microblog"
-                        ? "Show Mastodon posts in the Events view."
-                        : ""
+                        //% "Show Mastodon posts in the Events view."
+                        ? qsTrId("settings-accounts-mastodon-la-service_posts_description")
+                        : (model.serviceName === "mastodon-notifications"
+                           //% "Show Mastodon notifications."
+                           ? qsTrId("settings-accounts-mastodon-la-service_notifications_description")
+                           : "")
                 visible: text.length > 0
                 onCheckedChanged: {
                     if (checked) {
@@ -124,8 +135,10 @@ StandardAccountSettingsDisplay {
         TextSwitch {
             id: eventsSyncSwitch
 
-            text: "Sync Mastodon feed automatically"
-            description: "Fetch new posts periodically when browsing Events Mastodon feed."
+            //% "Sync Mastodon feed automatically"
+            text: qsTrId("settings-accounts-mastodon-la-auto_sync_feed")
+            //% "Fetch new posts periodically when browsing Events Mastodon feed."
+            description: qsTrId("settings-accounts-mastodon-la-auto_sync_feed_description")
 
             onCheckedChanged: {
                 autoSyncConf.value = checked

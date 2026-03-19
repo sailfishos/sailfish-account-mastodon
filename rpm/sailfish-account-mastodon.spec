@@ -73,6 +73,7 @@ fi
 %exclude %{_libdir}/libmastodonbuteocommon.so
 %{_datadir}/accounts/providers/mastodon.provider
 %{_datadir}/accounts/services/mastodon-microblog.service
+%{_datadir}/accounts/services/mastodon-notifications.service
 %{_datadir}/accounts/services/mastodon-sharing.service
 %{_datadir}/accounts/ui/MastodonSettingsDisplay.qml
 %{_datadir}/accounts/ui/mastodon.qml
@@ -91,6 +92,7 @@ fi
 %{_datadir}/lipstick/eventfeed/mastodon-delegate.qml
 %{_datadir}/lipstick/eventfeed/MastodonFeedItem.qml
 %{_datadir}/translations/lipstick-jolla-home-mastodon_eng_en.qm
+%{_datadir}/translations/lipstick-jolla-home-mastodon-notifications_eng_en.qm
 
 %{_libdir}/nemo-transferengine/plugins/sharing/libmastodonshareplugin.so
 %{_libdir}/nemo-transferengine/plugins/transfer/libmastodontransferplugin.so
@@ -99,3 +101,4 @@ fi
 %files -n sailfish-account-mastodon-ts-devel
 %{_datadir}/translations/source/settings-accounts-mastodon.ts
 %{_datadir}/translations/source/lipstick-jolla-home-mastodon.ts
+%{_datadir}/translations/source/lipstick-jolla-home-mastodon-notifications.ts

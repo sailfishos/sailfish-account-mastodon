@@ -366,12 +366,13 @@ AccountCreationAgent {
             function configure() {
                 hasConfigured = true
 
-                var services = ["mastodon-microblog", "mastodon-sharing"]
+                var services = ["mastodon-microblog", "mastodon-notifications", "mastodon-sharing"]
                 var providerDisplayName = root.accountProvider && root.accountProvider.displayName
                         ? root.accountProvider.displayName.toString().trim()
                         : ""
                 if (providerDisplayName.length === 0) {
-                    providerDisplayName = "Mastodon"
+                    //% "Mastodon"
+                    providerDisplayName = qsTrId("settings-accounts-mastodon-la-provider_name")
                 }
                 newAccount.displayName = providerDisplayName
 

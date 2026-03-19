@@ -28,6 +28,7 @@ PRE_TARGETDEPS += ts engineering_english
 OTHER_FILES += \
     $$PWD/providers/mastodon.provider \
     $$PWD/services/mastodon-microblog.service \
+    $$PWD/services/mastodon-notifications.service \
     $$PWD/services/mastodon-sharing.service \
     $$PWD/ui/MastodonSettingsDisplay.qml \
     $$PWD/ui/mastodon.qml \
@@ -39,6 +40,7 @@ provider.path = /usr/share/accounts/providers/
 
 services.files += \
     $$PWD/services/mastodon-microblog.service \
+    $$PWD/services/mastodon-notifications.service \
     $$PWD/services/mastodon-sharing.service
 services.path = /usr/share/accounts/services/
 

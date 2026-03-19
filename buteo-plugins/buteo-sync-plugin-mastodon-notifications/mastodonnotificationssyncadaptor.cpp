@@ -19,9 +19,10 @@
  ****************************************************************************/
 
 #include "mastodonnotificationssyncadaptor.h"
-#include "trace.h"
 #include "mastodontextutils.h"
 
+#include <QtCore/QCoreApplication>
+#include <QtCore/QLoggingCategory>
 #include <QtCore/QJsonArray>
 #include <QtCore/QJsonObject>
 #include <QtCore/QJsonValue>
@@ -50,10 +51,78 @@
     )
 
 namespace {
+    Q_LOGGING_CATEGORY(lcMastodonNotifications, "buteo.plugin.mastodon.notifications", QtWarningMsg)
+
     const char *const NotificationCategory = "x-nemo.social.mastodon.notification";
     const char *const NotificationIdHint = "x-nemo.sociald.notification-id";
     const char *const LastFetchedNotificationIdKey = "LastFetchedNotificationId";
     const int NotificationsPageLimit = 80;
+
+    //% "mentioned you"
+    const char *const TrIdMentionedYou = QT_TRID_NOOP("lipstick-jolla-home-la-mastodon-notification-mentioned_you");
+    //% "boosted your post"
+    const char *const TrIdBoostedYourPost = QT_TRID_NOOP("lipstick-jolla-home-la-mastodon-notification-boosted_your_post");
+    //% "favourited your post"
+    const char *const TrIdFavouritedYourPost = QT_TRID_NOOP("lipstick-jolla-home-la-mastodon-notification-favourited_your_post");
+    //% "started following you"
+    const char *const TrIdStartedFollowingYou = QT_TRID_NOOP("lipstick-jolla-home-la-mastodon-notification-started_following_you");
+    //% "requested to follow you"
+    const char *const TrIdRequestedToFollowYou = QT_TRID_NOOP("lipstick-jolla-home-la-mastodon-notification-requested_to_follow_you");
+    //% "interacted with your poll"
+    const char *const TrIdInteractedWithYourPoll = QT_TRID_NOOP("lipstick-jolla-home-la-mastodon-notification-interacted_with_your_poll");
+    //% "posted"
+    const char *const TrIdPosted = QT_TRID_NOOP("lipstick-jolla-home-la-mastodon-notification-posted");
+    //% "updated a post"
+    const char *const TrIdUpdatedPost = QT_TRID_NOOP("lipstick-jolla-home-la-mastodon-notification-updated_post");
+    //% "signed up"
+    const char *const TrIdSignedUp = QT_TRID_NOOP("lipstick-jolla-home-la-mastodon-notification-signed_up");
+    //% "reported an account"
+    const char *const TrIdReportedAccount = QT_TRID_NOOP("lipstick-jolla-home-la-mastodon-notification-reported_account");
+    //% "received a moderation warning"
+    const char *const TrIdReceivedModerationWarning = QT_TRID_NOOP("lipstick-jolla-home-la-mastodon-notification-received_moderation_warning");
+    //% "quoted your post"
+    const char *const TrIdQuotedYourPost = QT_TRID_NOOP("lipstick-jolla-home-la-mastodon-notification-quoted_your_post");
+    //% "updated a post that quoted you"
+    const char *const TrIdUpdatedQuotedPost = QT_TRID_NOOP("lipstick-jolla-home-la-mastodon-notification-updated_quoted_post");
+    //% "sent you a notification"
+    const char *const TrIdSentNotification = QT_TRID_NOOP("lipstick-jolla-home-la-mastodon-notification-sent_notification");
+
+    //% "An admin blocked an instance"
+    const char *const TrIdAdminBlockedInstance = QT_TRID_NOOP("lipstick-jolla-home-la-mastodon-notification-admin_blocked_instance");
+    //% "An admin blocked %1"
+    const char *const TrIdAdminBlockedTarget = QT_TRID_NOOP("lipstick-jolla-home-la-mastodon-notification-admin_blocked_target");
+    //% "You blocked an instance"
+    const char *const TrIdYouBlockedInstance = QT_TRID_NOOP("lipstick-jolla-home-la-mastodon-notification-you_blocked_instance");
+    //% "You blocked %1"
+    const char *const TrIdYouBlockedTarget = QT_TRID_NOOP("lipstick-jolla-home-la-mastodon-notification-you_blocked_target");
+    //% "An account was suspended"
+    const char *const TrIdAccountSuspended = QT_TRID_NOOP("lipstick-jolla-home-la-mastodon-notification-account_suspended");
+    //% "%1 was suspended"
+    const char *const TrIdTargetSuspended = QT_TRID_NOOP("lipstick-jolla-home-la-mastodon-notification-target_suspended");
+    //% "Some follow relationships were severed"
+    const char *const TrIdRelationshipsSevered = QT_TRID_NOOP("lipstick-jolla-home-la-mastodon-notification-relationships_severed");
+    //% "%1 (%2 followers, %3 following removed)"
+    const char *const TrIdRelationshipsSummary = QT_TRID_NOOP("lipstick-jolla-home-la-mastodon-notification-relationships_summary");
+
+    //% "A moderator sent you a warning"
+    const char *const TrIdModeratorWarningNone = QT_TRID_NOOP("lipstick-jolla-home-la-mastodon-notification-moderator_warning_none");
+    //% "A moderator disabled your account"
+    const char *const TrIdModeratorWarningDisable = QT_TRID_NOOP("lipstick-jolla-home-la-mastodon-notification-moderator_warning_disable");
+    //% "A moderator marked specific posts as sensitive"
+    const char *const TrIdModeratorWarningSpecificSensitive = QT_TRID_NOOP("lipstick-jolla-home-la-mastodon-notification-moderator_warning_specific_sensitive");
+    //% "A moderator deleted specific posts"
+    const char *const TrIdModeratorWarningDeletePosts = QT_TRID_NOOP("lipstick-jolla-home-la-mastodon-notification-moderator_warning_delete_posts");
+    //% "A moderator marked all your posts as sensitive"
+    const char *const TrIdModeratorWarningAllSensitive = QT_TRID_NOOP("lipstick-jolla-home-la-mastodon-notification-moderator_warning_all_sensitive");
+    //% "A moderator limited your account"
+    const char *const TrIdModeratorWarningSilence = QT_TRID_NOOP("lipstick-jolla-home-la-mastodon-notification-moderator_warning_silence");
+    //% "A moderator suspended your account"
+    const char *const TrIdModeratorWarningSuspend = QT_TRID_NOOP("lipstick-jolla-home-la-mastodon-notification-moderator_warning_suspend");
+
+    //% "Mastodon"
+    const char *const TrIdMastodon = QT_TRID_NOOP("lipstick-jolla-home-la-mastodon-notification-mastodon");
+    //% "New notification"
+    const char *const TrIdNewNotification = QT_TRID_NOOP("lipstick-jolla-home-la-mastodon-notification-new_notification");
 
     QString displayNameForAccount(const QJsonObject &account)
     {
@@ -73,34 +142,34 @@ namespace {
     QString actionText(const QString &type)
     {
         if (type == QLatin1String("mention")) {
-            return QStringLiteral("mentioned you");
+            return qtTrId(TrIdMentionedYou);
         } else if (type == QLatin1String("reblog")) {
-            return QStringLiteral("boosted your post");
+            return qtTrId(TrIdBoostedYourPost);
         } else if (type == QLatin1String("favourite")) {
-            return QStringLiteral("favourited your post");
+            return qtTrId(TrIdFavouritedYourPost);
         } else if (type == QLatin1String("follow")) {
-            return QStringLiteral("started following you");
+            return qtTrId(TrIdStartedFollowingYou);
         } else if (type == QLatin1String("follow_request")) {
-            return QStringLiteral("requested to follow you");
+            return qtTrId(TrIdRequestedToFollowYou);
         } else if (type == QLatin1String("poll")) {
-            return QStringLiteral("interacted with your poll");
+            return qtTrId(TrIdInteractedWithYourPoll);
         } else if (type == QLatin1String("status")) {
-            return QStringLiteral("posted");
+            return qtTrId(TrIdPosted);
         } else if (type == QLatin1String("update")) {
-            return QStringLiteral("updated a post");
+            return qtTrId(TrIdUpdatedPost);
         } else if (type == QLatin1String("admin.sign_up")) {
-            return QStringLiteral("signed up");
+            return qtTrId(TrIdSignedUp);
         } else if (type == QLatin1String("admin.report")) {
-            return QStringLiteral("reported an account");
+            return qtTrId(TrIdReportedAccount);
         } else if (type == QLatin1String("moderation_warning")) {
-            return QStringLiteral("received a moderation warning");
+            return qtTrId(TrIdReceivedModerationWarning);
         } else if (type == QLatin1String("quote")) {
-            return QStringLiteral("quoted your post");
+            return qtTrId(TrIdQuotedYourPost);
         } else if (type == QLatin1String("quoted_update")) {
-            return QStringLiteral("updated a post that quoted you");
+            return qtTrId(TrIdUpdatedQuotedPost);
         }
 
-        return QStringLiteral("sent you a notification");
+        return qtTrId(TrIdSentNotification);
     }
 
     bool useSystemSummary(const QString &notificationType)
@@ -119,18 +188,18 @@ namespace {
         QString action;
         if (eventType == QLatin1String("domain_block")) {
             action = targetName.isEmpty()
-                    ? QStringLiteral("An admin blocked an instance")
-                    : QStringLiteral("An admin blocked %1").arg(targetName);
+                    ? qtTrId(TrIdAdminBlockedInstance)
+                    : qtTrId(TrIdAdminBlockedTarget).arg(targetName);
         } else if (eventType == QLatin1String("user_domain_block")) {
             action = targetName.isEmpty()
-                    ? QStringLiteral("You blocked an instance")
-                    : QStringLiteral("You blocked %1").arg(targetName);
+                    ? qtTrId(TrIdYouBlockedInstance)
+                    : qtTrId(TrIdYouBlockedTarget).arg(targetName);
         } else if (eventType == QLatin1String("account_suspension")) {
             action = targetName.isEmpty()
-                    ? QStringLiteral("An account was suspended")
-                    : QStringLiteral("%1 was suspended").arg(targetName);
+                    ? qtTrId(TrIdAccountSuspended)
+                    : qtTrId(TrIdTargetSuspended).arg(targetName);
         } else {
-            action = QStringLiteral("Some follow relationships were severed");
+            action = qtTrId(TrIdRelationshipsSevered);
         }
 
         const int affectedCount = followersCount + followingCount;
@@ -138,7 +207,7 @@ namespace {
             return action;
         }
 
-        return QStringLiteral("%1 (%2 followers, %3 following removed)")
+        return qtTrId(TrIdRelationshipsSummary)
                 .arg(action)
                 .arg(followersCount)
                 .arg(followingCount);
@@ -153,19 +222,19 @@ namespace {
 
         const QString action = warningObject.value(QStringLiteral("action")).toString();
         if (action == QLatin1String("none")) {
-            return QStringLiteral("A moderator sent you a warning");
+            return qtTrId(TrIdModeratorWarningNone);
         } else if (action == QLatin1String("disable")) {
-            return QStringLiteral("A moderator disabled your account");
+            return qtTrId(TrIdModeratorWarningDisable);
         } else if (action == QLatin1String("mark_statuses_as_sensitive")) {
-            return QStringLiteral("A moderator marked specific posts as sensitive");
+            return qtTrId(TrIdModeratorWarningSpecificSensitive);
         } else if (action == QLatin1String("delete_statuses")) {
-            return QStringLiteral("A moderator deleted specific posts");
+            return qtTrId(TrIdModeratorWarningDeletePosts);
         } else if (action == QLatin1String("sensitive")) {
-            return QStringLiteral("A moderator marked all your posts as sensitive");
+            return qtTrId(TrIdModeratorWarningAllSensitive);
         } else if (action == QLatin1String("silence")) {
-            return QStringLiteral("A moderator limited your account");
+            return qtTrId(TrIdModeratorWarningSilence);
         } else if (action == QLatin1String("suspend")) {
-            return QStringLiteral("A moderator suspended your account");
+            return qtTrId(TrIdModeratorWarningSuspend);
         }
 
         return QString();
@@ -231,7 +300,7 @@ MastodonNotificationsSyncAdaptor::~MastodonNotificationsSyncAdaptor()
 
 QString MastodonNotificationsSyncAdaptor::syncServiceName() const
 {
-    return QStringLiteral("mastodon-microblog");
+    return QStringLiteral("mastodon-notifications");
 }
 
 void MastodonNotificationsSyncAdaptor::purgeDataForOldAccount(int oldId, SocialNetworkSyncAdaptor::PurgeMode)
@@ -252,7 +321,7 @@ void MastodonNotificationsSyncAdaptor::beginSync(int accountId, const QString &a
 void MastodonNotificationsSyncAdaptor::finalize(int accountId)
 {
     if (syncAborted()) {
-        qCInfo(lcSocialPlugin) << "sync aborted, won't update notifications";
+        qCInfo(lcMastodonNotifications) << "sync aborted, won't update notifications";
     }
 
     Q_UNUSED(accountId)
@@ -348,7 +417,7 @@ void MastodonNotificationsSyncAdaptor::requestUnreadMarker(int accountId, const 
         incrementSemaphore(accountId);
         setupReplyTimeout(accountId, reply);
     } else {
-        qCWarning(lcSocialPlugin) << "unable to request notifications marker from Mastodon account with id" << accountId;
+        qCWarning(lcMastodonNotifications) << "unable to request notifications marker from Mastodon account with id" << accountId;
     }
 }
 
@@ -371,7 +440,7 @@ void MastodonNotificationsSyncAdaptor::finishedUnreadMarkerHandler()
     bool ok = false;
     const QJsonObject markerObject = parseJsonObjectReplyData(replyData, &ok);
     if (isError || !ok) {
-        qCWarning(lcSocialPlugin) << "unable to parse notifications marker data from request with account"
+        qCWarning(lcMastodonNotifications) << "unable to parse notifications marker data from request with account"
                                   << accountId << ", got:" << QString::fromUtf8(replyData);
         PendingSyncState fallbackState;
         fallbackState.accessToken = accessToken;
@@ -435,7 +504,7 @@ void MastodonNotificationsSyncAdaptor::requestNotifications(int accountId,
         incrementSemaphore(accountId);
         setupReplyTimeout(accountId, reply);
     } else {
-        qCWarning(lcSocialPlugin) << "unable to request notifications from Mastodon account with id" << accountId;
+        qCWarning(lcMastodonNotifications) << "unable to request notifications from Mastodon account with id" << accountId;
     }
 }
 
@@ -463,7 +532,7 @@ void MastodonNotificationsSyncAdaptor::requestMarkRead(int accountId,
         incrementSemaphore(accountId);
         setupReplyTimeout(accountId, reply);
     } else {
-        qCWarning(lcSocialPlugin) << "unable to update notifications marker for Mastodon account with id" << accountId;
+        qCWarning(lcMastodonNotifications) << "unable to update notifications marker for Mastodon account with id" << accountId;
     }
 }
 
@@ -501,7 +570,7 @@ void MastodonNotificationsSyncAdaptor::finishedNotificationsHandler()
     const QJsonArray notifications = parseJsonArrayReplyData(replyData, &ok);
     if (!isError && ok) {
         if (!notifications.size()) {
-            qCDebug(lcSocialPlugin) << "no notifications received for account" << accountId;
+            qCDebug(lcMastodonNotifications) << "no notifications received for account" << accountId;
             m_pendingSyncStates.remove(accountId);
             decrementSemaphore(accountId);
             return;
@@ -596,7 +665,7 @@ void MastodonNotificationsSyncAdaptor::finishedNotificationsHandler()
             PendingNotification pendingNotification;
             pendingNotification.notificationId = notificationId;
             pendingNotification.summary = useSystemSummary(notificationType)
-                    ? QStringLiteral("Mastodon")
+                    ? qtTrId(TrIdMastodon)
                     : displayName;
             pendingNotification.body = body;
             pendingNotification.link = url;
@@ -647,7 +716,7 @@ void MastodonNotificationsSyncAdaptor::finishedNotificationsHandler()
             requestMarkRead(accountId, state.accessToken, markerId);
         }
     } else {
-        qCWarning(lcSocialPlugin) << "unable to parse notifications data from request with account" << accountId
+        qCWarning(lcMastodonNotifications) << "unable to parse notifications data from request with account" << accountId
                                   << ", got:" << QString::fromUtf8(replyData);
     }
 
@@ -679,7 +748,7 @@ void MastodonNotificationsSyncAdaptor::finishedMarkReadHandler()
             m_lastMarkedReadIds.insert(accountId, lastReadId);
         }
     } else {
-        qCWarning(lcSocialPlugin) << "unable to update notifications marker for account" << accountId
+        qCWarning(lcMastodonNotifications) << "unable to update notifications marker for account" << accountId
                                   << ", got:" << QString::fromUtf8(replyData);
     }
 
@@ -695,10 +764,10 @@ void MastodonNotificationsSyncAdaptor::publishSystemNotification(int accountId,
                                ? notificationData.timestamp
                                : QDateTime::currentDateTimeUtc());
     notification->setSummary(notificationData.summary.isEmpty()
-                             ? QStringLiteral("Mastodon")
+                             ? qtTrId(TrIdMastodon)
                              : notificationData.summary);
     notification->setBody(notificationData.body.isEmpty()
-                          ? QStringLiteral("New notification")
+                          ? qtTrId(TrIdNewNotification)
                           : notificationData.body);
     notification->setPreviewSummary(notificationData.summary);
     notification->setPreviewBody(notificationData.body);
@@ -716,7 +785,7 @@ void MastodonNotificationsSyncAdaptor::publishSystemNotification(int accountId,
     notification->setRemoteAction(OPEN_URL_ACTION(authorizeInteractionUrl(apiHost(accountId), safeOpenUrl)));
     notification->publish();
     if (notification->replacesId() == 0) {
-        qCWarning(lcSocialPlugin) << "failed to publish Mastodon notification"
+        qCWarning(lcMastodonNotifications) << "failed to publish Mastodon notification"
                                   << notificationData.notificationId;
     }
 }

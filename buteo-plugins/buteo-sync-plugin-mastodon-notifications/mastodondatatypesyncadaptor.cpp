@@ -20,8 +20,8 @@
 
 #include "mastodondatatypesyncadaptor.h"
 #include "mastodonauthutils.h"
-#include "trace.h"
 
+#include <QtCore/QLoggingCategory>
 #include <QtCore/QVariantMap>
 #include <QtNetwork/QNetworkRequest>
 
@@ -35,6 +35,8 @@
 #include <SignOn/Identity>
 #include <SignOn/AuthSession>
 #include <SignOn/SessionData>
+
+Q_LOGGING_CATEGORY(lcMastodonNotificationsSync, "buteo.plugin.mastodon.notifications.sync", QtWarningMsg)
 
 MastodonNotificationsDataTypeSyncAdaptor::MastodonNotificationsDataTypeSyncAdaptor(
         SocialNetworkSyncAdaptor::DataType dataType,
@@ -50,7 +52,7 @@ MastodonNotificationsDataTypeSyncAdaptor::~MastodonNotificationsDataTypeSyncAdap
 void MastodonNotificationsDataTypeSyncAdaptor::sync(const QString &dataTypeString, int accountId)
 {
     if (dataTypeString != SocialNetworkSyncAdaptor::dataTypeName(m_dataType)) {
-        qCWarning(lcSocialPlugin) << "Mastodon" << SocialNetworkSyncAdaptor::dataTypeName(m_dataType)
+        qCWarning(lcMastodonNotificationsSync) << "Mastodon" << SocialNetworkSyncAdaptor::dataTypeName(m_dataType)
                                   << "sync adaptor was asked to sync" << dataTypeString;
         setStatus(SocialNetworkSyncAdaptor::Error);
         return;
@@ -58,14 +60,14 @@ void MastodonNotificationsDataTypeSyncAdaptor::sync(const QString &dataTypeStrin
 
     setStatus(SocialNetworkSyncAdaptor::Busy);
     updateDataForAccount(accountId);
-    qCDebug(lcSocialPlugin) << "successfully triggered sync with profile:" << m_accountSyncProfile->name();
+    qCDebug(lcMastodonNotificationsSync) << "successfully triggered sync with profile:" << m_accountSyncProfile->name();
 }
 
 void MastodonNotificationsDataTypeSyncAdaptor::updateDataForAccount(int accountId)
 {
     Accounts::Account *account = Accounts::Account::fromId(m_accountManager, accountId, this);
     if (!account) {
-        qCWarning(lcSocialPlugin) << "existing account with id" << accountId << "couldn't be retrieved";
+        qCWarning(lcMastodonNotificationsSync) << "existing account with id" << accountId << "couldn't be retrieved";
         setStatus(SocialNetworkSyncAdaptor::Error);
         return;
     }
@@ -89,7 +91,7 @@ void MastodonNotificationsDataTypeSyncAdaptor::errorHandler(QNetworkReply::Netwo
     const int accountId = reply->property("accountId").toInt();
     const int httpStatus = reply->attribute(QNetworkRequest::HttpStatusCodeAttribute).toInt();
 
-    qCWarning(lcSocialPlugin) << SocialNetworkSyncAdaptor::dataTypeName(m_dataType)
+    qCWarning(lcMastodonNotificationsSync) << SocialNetworkSyncAdaptor::dataTypeName(m_dataType)
                               << "request with account" << accountId
                               << "experienced error:" << err
                               << "HTTP:" << httpStatus;
@@ -114,7 +116,7 @@ void MastodonNotificationsDataTypeSyncAdaptor::sslErrorsHandler(const QList<QSsl
         sslerrs.chop(2);
     }
 
-    qCWarning(lcSocialPlugin) << SocialNetworkSyncAdaptor::dataTypeName(m_dataType)
+    qCWarning(lcMastodonNotificationsSync) << SocialNetworkSyncAdaptor::dataTypeName(m_dataType)
                               << "request with account" << sender()->property("accountId").toInt()
                               << "experienced ssl errors:" << sslerrs;
     sender()->setProperty("isError", QVariant::fromValue<bool>(true));
@@ -122,7 +124,7 @@ void MastodonNotificationsDataTypeSyncAdaptor::sslErrorsHandler(const QList<QSsl
 
 void MastodonNotificationsDataTypeSyncAdaptor::setCredentialsNeedUpdate(Accounts::Account *account)
 {
-    qCInfo(lcSocialPlugin) << "sociald:Mastodon: setting CredentialsNeedUpdate to true for account:" << account->id();
+    qCInfo(lcMastodonNotificationsSync) << "sociald:Mastodon: setting CredentialsNeedUpdate to true for account:" << account->id();
     Accounts::Service srv(m_accountManager->service(syncServiceName()));
     account->selectService(srv);
     account->setValue(QStringLiteral("CredentialsNeedUpdate"), QVariant::fromValue<bool>(true));
@@ -145,7 +147,7 @@ void MastodonNotificationsDataTypeSyncAdaptor::signIn(Accounts::Account *account
             ? SignOn::Identity::existingIdentity(account->credentialsId())
             : 0;
     if (!identity) {
-        qCWarning(lcSocialPlugin) << "account" << accountId << "has no valid credentials, cannot sign in";
+        qCWarning(lcMastodonNotificationsSync) << "account" << accountId << "has no valid credentials, cannot sign in";
         decrementSemaphore(accountId);
         return;
     }
@@ -155,7 +157,7 @@ void MastodonNotificationsDataTypeSyncAdaptor::signIn(Accounts::Account *account
     const QString mechanism = accSrv.authData().mechanism();
     SignOn::AuthSession *session = identity->createSession(method);
     if (!session) {
-        qCWarning(lcSocialPlugin) << "could not create signon session for account" << accountId;
+        qCWarning(lcMastodonNotificationsSync) << "could not create signon session for account" << accountId;
         identity->deleteLater();
         decrementSemaphore(accountId);
         return;
@@ -183,7 +185,7 @@ void MastodonNotificationsDataTypeSyncAdaptor::signOnError(const SignOn::Error &
     SignOn::Identity *identity = session->property("identity").value<SignOn::Identity*>();
     const int accountId = account->id();
 
-    qCWarning(lcSocialPlugin) << "credentials for account with id" << accountId
+    qCWarning(lcMastodonNotificationsSync) << "credentials for account with id" << accountId
                               << "couldn't be retrieved:" << error.type() << error.message();
 
     if (error.type() == SignOn::Error::UserInteraction) {
@@ -211,7 +213,7 @@ void MastodonNotificationsDataTypeSyncAdaptor::signOnResponse(const SignOn::Sess
 
     accessToken = MastodonAuthUtils::accessToken(data);
     if (accessToken.isEmpty()) {
-        qCWarning(lcSocialPlugin) << "signon response for account with id" << accountId
+        qCWarning(lcMastodonNotificationsSync) << "signon response for account with id" << accountId
                                   << "contained no access token; keys:" << data.keys();
     }
 

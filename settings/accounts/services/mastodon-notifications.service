@@ -1,14 +1,14 @@
 <?xml version="1.0" encoding="UTF-8" ?>
 <!-- Copyright (C) 2013-2026 Jolla Ltd. -->
-<service id="mastodon-microblog">
+<service id="mastodon-notifications">
     <type>microblogging</type>
     <translations>/usr/share/translations/settings-accounts-mastodon</translations>
-    <name>Posts</name>
+    <name>Notifications</name>
     <icon>image://theme/icon-l-mastodon</icon>
     <provider>mastodon</provider>
 
     <template>
-        <setting name="sync_profile_templates" type="as">["mastodon.Posts"]</setting>
+        <setting name="sync_profile_templates" type="as">["mastodon.Notifications"]</setting>
         <group name="auth">
             <setting name="method">oauth2</setting>
             <setting name="mechanism">web_server</setting>

@@ -41,18 +41,6 @@ SocialMediaFeedItem {
     property string _accountName: model && model.accountName ? model.accountName.toString() : ""
     property string _bodyText: model && model.body ? model.body.toString() : ""
     //: Action label shown in Mastodon interaction menu.
-    //% "Favourite"
-    readonly property string _favouriteActionText: qsTrId("lipstick-jolla-home-la-mastodon_favourite")
-    //: Action label shown in Mastodon interaction menu when the post is already favourited.
-    //% "Unfavourite"
-    readonly property string _unfavouriteActionText: qsTrId("lipstick-jolla-home-la-mastodon_unfavourite")
-    //: Action label shown in Mastodon interaction menu.
-    //% "Boost"
-    readonly property string _boostActionText: qsTrId("lipstick-jolla-home-la-mastodon_boost")
-    //: Action label shown in Mastodon interaction menu when the post is already boosted.
-    //% "Undo boost"
-    readonly property string _unboostActionText: qsTrId("lipstick-jolla-home-la-mastodon_unboost")
-    //: Action label shown in Mastodon interaction menu.
     //% "Share"
     readonly property string _shareActionText: qsTrId("lipstick-jolla-home-la-mastodon_share")
     //: Link title used when sharing a Mastodon post.
@@ -280,7 +268,7 @@ SocialMediaFeedItem {
     }
 
     function shareStatusUrl() {
-        return model && model.url ? model.url.toString() : ""
+        return item.stringValue("url", "link", "uri")
     }
 
     function topLevelParent() {
@@ -344,38 +332,6 @@ SocialMediaFeedItem {
             property bool menuOpen: height > 0
             property bool wasOpened: false
             z: 10000
-            mapSourceItem: _contentColumn
-            actionEnabled: item.postActions
-                           && item.actionPostId().length > 0
-                           && item.actionAccountId() >= 0
-                           && !item.lockScreenActive
-                           && !item.housekeeping
-            interactionItems: [
-                {
-                    name: "like",
-                    // U+2605 BLACK STAR
-                    symbol: "\u2605",
-                    active: item.isFavourited,
-                    inactiveText: item._favouriteActionText,
-                    activeText: item._unfavouriteActionText
-                },
-                {
-                    name: "reblog",
-                    // U+21BB CLOCKWISE OPEN CIRCLE ARROW
-                    symbol: "\u21BB",
-                    active: item.isReblogged,
-                    inactiveText: item._boostActionText,
-                    activeText: item._unboostActionText
-                },
-                {
-                    name: "share",
-                    // U+260D OPPOSITION (ironic doncha think)
-                    symbol: "\u260D",
-                    active: false,
-                    inactiveText: item._shareActionText,
-                    activeText: item._shareActionText
-                }
-            ]
 
             onPositionChanged: {
                 horizontalActions.xPos = _contentColumn.mapFromItem(actionMenu, mouse.x, mouse.y).x
@@ -412,12 +368,12 @@ SocialMediaFeedItem {
                 width: parent.width
                 height: Theme.itemSizeMedium
 
-                onXPosChanged: hoveredIndex = xPos < width / 2 ? 0 : 1
+                onXPosChanged: hoveredIndex = Math.max(0, Math.min(2, Math.floor((xPos * 3) / Math.max(1, width))))
                 onDownChanged: if (!down) hoveredIndex = -1
 
                 onClicked: {
                     xPos = _contentColumn.mapFromItem(actionMenu, actionMenu.mouseX, actionMenu.mouseY).x
-                    var index = hoveredIndex >= 0 ? hoveredIndex : (xPos < width / 2 ? 0 : 1)
+                    var index = hoveredIndex >= 0 ? hoveredIndex : Math.max(0, Math.min(2, Math.floor((xPos * 3) / Math.max(1, width))))
                     if (!actionEnabled) {
                         return
                     }
@@ -429,19 +385,30 @@ SocialMediaFeedItem {
                         } else {
                             item.postActions.favourite(accountId, postId)
                         }
-                    } else {
+                    } else if (index === 1) {
                         if (item.isReblogged) {
                             item.postActions.unboost(accountId, postId)
                         } else {
                             item.postActions.boost(accountId, postId)
                         }
+                    } else {
+                        var shareUrl = item.shareStatusUrl()
+                        if (shareUrl.length === 0) {
+                            return
+                        }
+                        item._shareAction.resources = [{
+                            "data": shareUrl,
+                            "linkTitle": item._shareLinkTitle,
+                            "type": "text/x-url"
+                        }]
+                        item._shareAction.trigger()
                     }
                 }
 
                 Rectangle {
                     anchors.verticalCenter: parent.verticalCenter
-                    x: horizontalActions.hoveredIndex === 1 ? parent.width / 2 : 0
-                    width: parent.width / 2
+                    x: (horizontalActions.hoveredIndex >= 0 ? horizontalActions.hoveredIndex : 0) * (parent.width / 3)
+                    width: parent.width / 3
                     height: parent.height
                     visible: horizontalActions.down && horizontalActions.hoveredIndex >= 0
                     color: Theme.rgba(Theme.highlightBackgroundColor, Theme.highlightBackgroundOpacity)
@@ -451,7 +418,7 @@ SocialMediaFeedItem {
                     anchors.fill: parent
 
                     Label {
-                        width: parent.width / 2
+                        width: parent.width / 3
                         height: parent.height
                         horizontalAlignment: Text.AlignHCenter
                         verticalAlignment: Text.AlignVCenter
@@ -467,7 +434,7 @@ SocialMediaFeedItem {
                     }
 
                     Label {
-                        width: parent.width / 2
+                        width: parent.width / 3
                         height: parent.height
                         horizontalAlignment: Text.AlignHCenter
                         verticalAlignment: Text.AlignVCenter
@@ -481,17 +448,20 @@ SocialMediaFeedItem {
                                      ? Theme.secondaryHighlightColor : Theme.primaryColor))
                                : Theme.rgba(Theme.secondaryColor, 0.4)
                     }
-                } else if (actionName === "share") {
-                    var shareUrl = item.shareStatusUrl()
-                    if (shareUrl.length === 0) {
-                        return
+
+                    Label {
+                        width: parent.width / 3
+                        height: parent.height
+                        horizontalAlignment: Text.AlignHCenter
+                        verticalAlignment: Text.AlignVCenter
+                        font.pixelSize: Theme.fontSizeExtraLarge
+                        text: "\u260D"
+                        color: horizontalActions.actionEnabled
+                               ? (((horizontalActions.down && horizontalActions.hoveredIndex === 2)
+                                   || (horizontalActions.highlighted && horizontalActions.hoveredIndex === 2))
+                                  ? Theme.secondaryHighlightColor : Theme.primaryColor)
+                               : Theme.rgba(Theme.secondaryColor, 0.4)
                     }
-                    item._shareAction.resources = [{
-                        "data": shareUrl,
-                        "linkTitle": item._shareLinkTitle,
-                        "type": "text/x-url"
-                    }]
-                    item._shareAction.trigger()
                 }
             }
         }
