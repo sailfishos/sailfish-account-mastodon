@@ -81,6 +81,11 @@ QString MastodonNotificationsDataTypeSyncAdaptor::apiHost(int accountId) const
     return m_apiHosts.value(accountId, QStringLiteral("https://mastodon.social"));
 }
 
+QString MastodonNotificationsDataTypeSyncAdaptor::authServiceName() const
+{
+    return syncServiceName();
+}
+
 void MastodonNotificationsDataTypeSyncAdaptor::errorHandler(QNetworkReply::NetworkError err)
 {
     QNetworkReply *reply = qobject_cast<QNetworkReply*>(sender());
@@ -125,7 +130,7 @@ void MastodonNotificationsDataTypeSyncAdaptor::sslErrorsHandler(const QList<QSsl
 void MastodonNotificationsDataTypeSyncAdaptor::setCredentialsNeedUpdate(Accounts::Account *account)
 {
     qCInfo(lcMastodonNotificationsSync) << "sociald:Mastodon: setting CredentialsNeedUpdate to true for account:" << account->id();
-    Accounts::Service srv(m_accountManager->service(syncServiceName()));
+    Accounts::Service srv(m_accountManager->service(authServiceName()));
     account->selectService(srv);
     account->setValue(QStringLiteral("CredentialsNeedUpdate"), QVariant::fromValue<bool>(true));
     account->setValue(QStringLiteral("CredentialsNeedUpdateFrom"), QVariant::fromValue<QString>(QString::fromLatin1("sociald-mastodon")));
@@ -141,8 +146,9 @@ void MastodonNotificationsDataTypeSyncAdaptor::signIn(Accounts::Account *account
         return;
     }
 
-    Accounts::Service srv(m_accountManager->service(syncServiceName()));
+    Accounts::Service srv(m_accountManager->service(authServiceName()));
     account->selectService(srv);
+
     SignOn::Identity *identity = account->credentialsId() > 0
             ? SignOn::Identity::existingIdentity(account->credentialsId())
             : 0;

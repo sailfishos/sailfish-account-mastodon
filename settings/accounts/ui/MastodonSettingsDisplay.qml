@@ -13,6 +13,7 @@ StandardAccountSettingsDisplay {
     id: root
 
     settingsModified: true
+    property bool postsServiceEnabled: false
 
     function refreshDescriptionEditor() {
         var description = root.account.configurationValues("")["description"]
@@ -124,6 +125,9 @@ StandardAccountSettingsDisplay {
                            : "")
                 visible: text.length > 0
                 onCheckedChanged: {
+                    if (model.serviceName === "mastodon-microblog") {
+                        root.postsServiceEnabled = checked
+                    }
                     if (checked) {
                         root.account.enableWithService(model.serviceName)
                     } else {
@@ -140,6 +144,7 @@ StandardAccountSettingsDisplay {
             text: qsTrId("settings-accounts-mastodon-la-auto_sync_feed")
             //% "Fetch new posts periodically when browsing Events Mastodon feed."
             description: qsTrId("settings-accounts-mastodon-la-auto_sync_feed_description")
+            enabled: root.postsServiceEnabled
 
             onCheckedChanged: {
                 autoSyncConf.value = checked

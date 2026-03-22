@@ -59,6 +59,7 @@ Translation source files for sailfish-account-mastodon components.
 %post
 /sbin/ldconfig
 %{_libexecdir}/manage-groups add account-mastodon || :
+systemctl-user try-restart msyncd.service || :
 
 %postun
 /sbin/ldconfig

@@ -48,6 +48,7 @@ public:
 protected:
     QString apiHost(int accountId) const;
     virtual void updateDataForAccount(int accountId);
+    virtual QString authServiceName() const;
     virtual void beginSync(int accountId, const QString &accessToken) = 0;
 
 protected Q_SLOTS:

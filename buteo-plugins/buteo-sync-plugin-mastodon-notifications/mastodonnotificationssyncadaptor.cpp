@@ -303,6 +303,11 @@ QString MastodonNotificationsSyncAdaptor::syncServiceName() const
     return QStringLiteral("mastodon-notifications");
 }
 
+QString MastodonNotificationsSyncAdaptor::authServiceName() const
+{
+    return QStringLiteral("mastodon-microblog");
+}
+
 void MastodonNotificationsSyncAdaptor::purgeDataForOldAccount(int oldId, SocialNetworkSyncAdaptor::PurgeMode)
 {
     closeAccountNotifications(oldId);

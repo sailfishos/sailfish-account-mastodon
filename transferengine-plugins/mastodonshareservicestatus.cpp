@@ -27,6 +27,11 @@ MastodonShareServiceStatus::MastodonShareServiceStatus(QObject *parent)
 {
 }
 
+QString MastodonShareServiceStatus::authServiceName() const
+{
+    return QStringLiteral("mastodon-microblog");
+}
+
 void MastodonShareServiceStatus::signIn(int accountId)
 {
     Accounts::Account *account = Accounts::Account::fromId(m_accountManager, accountId, this);
@@ -36,9 +41,9 @@ void MastodonShareServiceStatus::signIn(int accountId)
         return;
     }
 
-    const Accounts::Service service(m_accountManager->service(m_serviceName));
+    const Accounts::Service service(m_accountManager->service(authServiceName()));
     if (!service.isValid()) {
-        qWarning() << Q_FUNC_INFO << "Invalid auth service" << m_serviceName;
+        qWarning() << Q_FUNC_INFO << "Invalid auth service" << authServiceName();
         account->deleteLater();
         setAccountDetailsState(accountId, Error);
         return;
@@ -123,7 +128,7 @@ void MastodonShareServiceStatus::signOnError(const SignOn::Error &error)
                << error.type() << error.message();
 
     if (accountId > 0 && error.type() == SignOn::Error::UserInteraction) {
-        setCredentialsNeedUpdate(accountId, m_serviceName);
+        setCredentialsNeedUpdate(accountId, authServiceName());
     }
 
     session->disconnect(this);
@@ -229,7 +234,9 @@ void MastodonShareServiceStatus::queryStatus(QueryStatusMode mode)
         if (!m_accountIdToDetailsIdx.contains(id)) {
             AccountDetails details;
             details.accountId = id;
+            acc->selectService(Accounts::Service());
             details.apiHost = MastodonAuthUtils::normalizeApiHost(acc->value(QStringLiteral("api/Host")).toString());
+            acc->selectService(service);
 
             QUrl apiUrl(details.apiHost);
             details.providerName = apiUrl.host();
