@@ -1,5 +1,6 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<!-- Copyright (C) 2013-2026 Jolla Ltd. -->
+<!-- SPDX-FileCopyrightText: 2013 - 2026 Jolla Ltd. -->
+<!-- SPDX-License-Identifier: BSD-3-Clause -->
 <profile name="mastodon.Posts" type="sync" >
     <key name="category" value="eventfeed" />
     <key name="enabled" value="false" />

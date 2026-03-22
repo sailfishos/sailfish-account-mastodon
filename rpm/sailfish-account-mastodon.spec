@@ -1,8 +1,10 @@
-# Copyright (C) 2013-2026 Jolla Ltd.
+# SPDX-FileCopyrightText: 2013 - 2026 Jolla Ltd.
+#
+# SPDX-License-Identifier: BSD-3-Clause
 
 Name: sailfish-account-mastodon
-License: LGPLv3
-Version: 1.0.0
+License: BSD-3-Clause AND LGPL-2.1-or-later
+Version: 1.0.1
 Release: 1
 Source0: %{name}-%{version}.tar.bz2
 Summary: SailfishOS account plugin for Mastodon
@@ -68,6 +70,8 @@ if [ "$1" -eq 0 ]; then
 fi
 
 %files
+%license LICENSES/BSD-3-Clause.txt
+%license LICENSES/LGPL-2.1-or-later.txt
 %{_libdir}/libmastodoncommon.so.*
 %exclude %{_libdir}/libmastodoncommon.so
 %{_libdir}/libmastodonbuteocommon.so.*

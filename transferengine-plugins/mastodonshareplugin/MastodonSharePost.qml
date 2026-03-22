@@ -1,5 +1,7 @@
 /*
- * Copyright (C) 2013-2026 Jolla Ltd.
+ * SPDX-FileCopyrightText: 2013 - 2026 Jolla Ltd.
+ *
+ * SPDX-License-Identifier: BSD-3-Clause
  */
 
 import QtQuick 2.6

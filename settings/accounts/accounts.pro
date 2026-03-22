@@ -1,3 +1,7 @@
+# SPDX-FileCopyrightText: 2013 - 2026 Jolla Ltd.
+#
+# SPDX-License-Identifier: BSD-3-Clause
+
 TEMPLATE = aux
 
 TS_FILE = $$OUT_PWD/settings-accounts-mastodon.ts

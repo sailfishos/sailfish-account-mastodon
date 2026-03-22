@@ -1,4 +1,4 @@
-documentation.list
+/*.list
 Makefile
 *.o
 *.so
