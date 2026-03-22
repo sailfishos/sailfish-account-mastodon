@@ -4,9 +4,9 @@
 // SPDX-License-Identifier: LGPL-2.1-or-later
 
 #include "mastodonpostssyncadaptor.h"
-#include "trace.h"
 #include "mastodontextutils.h"
 
+#include <QtCore/QLoggingCategory>
 #include <QtCore/QJsonArray>
 #include <QtCore/QJsonObject>
 #include <QtCore/QJsonValue>
@@ -15,6 +15,8 @@
 #include <QtNetwork/QNetworkRequest>
 
 namespace {
+    Q_LOGGING_CATEGORY(lcMastodonPostsSync, "buteo.plugin.mastodon.posts.sync", QtWarningMsg)
+
     QString displayNameForAccount(const QJsonObject &account)
     {
         const QString displayName = account.value(QStringLiteral("display_name")).toString().trimmed();
@@ -65,7 +67,7 @@ void MastodonPostsSyncAdaptor::beginSync(int accountId, const QString &accessTok
 void MastodonPostsSyncAdaptor::finalize(int accountId)
 {
     if (syncAborted()) {
-        qCInfo(lcSocialPlugin) << "sync aborted, won't commit database changes";
+        qCInfo(lcMastodonPostsSync) << "sync aborted, won't commit database changes";
     } else {
         m_db.commit();
         m_db.wait();
@@ -106,7 +108,7 @@ void MastodonPostsSyncAdaptor::requestPosts(int accountId, const QString &access
         incrementSemaphore(accountId);
         setupReplyTimeout(accountId, reply);
     } else {
-        qCWarning(lcSocialPlugin) << "unable to request home timeline posts from Mastodon account with id" << accountId;
+        qCWarning(lcMastodonPostsSync) << "unable to request home timeline posts from Mastodon account with id" << accountId;
     }
 }
 
@@ -131,7 +133,7 @@ void MastodonPostsSyncAdaptor::finishedPostsHandler()
         m_db.removePosts(accountId);
 
         if (!statuses.size()) {
-            qCDebug(lcSocialPlugin) << "no feed posts received for account" << accountId;
+            qCDebug(lcMastodonPostsSync) << "no feed posts received for account" << accountId;
             decrementSemaphore(accountId);
             return;
         }
@@ -234,7 +236,7 @@ void MastodonPostsSyncAdaptor::finishedPostsHandler()
                                 accountId);
         }
     } else {
-        qCWarning(lcSocialPlugin) << "unable to parse event feed data from request with account" << accountId
+        qCWarning(lcMastodonPostsSync) << "unable to parse event feed data from request with account" << accountId
                                   << ", got:" << QString::fromUtf8(replyData);
     }
 

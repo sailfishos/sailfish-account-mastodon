@@ -5,8 +5,8 @@
 
 #include "mastodondatatypesyncadaptor.h"
 #include "mastodonauthutils.h"
-#include "trace.h"
 
+#include <QtCore/QLoggingCategory>
 #include <QtCore/QVariantMap>
 #include <QtNetwork/QNetworkRequest>
 
@@ -20,6 +20,8 @@
 #include <SignOn/Identity>
 #include <SignOn/AuthSession>
 #include <SignOn/SessionData>
+
+Q_LOGGING_CATEGORY(lcMastodonSync, "buteo.plugin.mastodon.sync", QtWarningMsg)
 
 MastodonDataTypeSyncAdaptor::MastodonDataTypeSyncAdaptor(
         SocialNetworkSyncAdaptor::DataType dataType,
@@ -35,7 +37,7 @@ MastodonDataTypeSyncAdaptor::~MastodonDataTypeSyncAdaptor()
 void MastodonDataTypeSyncAdaptor::sync(const QString &dataTypeString, int accountId)
 {
     if (dataTypeString != SocialNetworkSyncAdaptor::dataTypeName(m_dataType)) {
-        qCWarning(lcSocialPlugin) << "Mastodon" << SocialNetworkSyncAdaptor::dataTypeName(m_dataType)
+        qCWarning(lcMastodonSync) << "Mastodon" << SocialNetworkSyncAdaptor::dataTypeName(m_dataType)
                                   << "sync adaptor was asked to sync" << dataTypeString;
         setStatus(SocialNetworkSyncAdaptor::Error);
         return;
@@ -43,14 +45,14 @@ void MastodonDataTypeSyncAdaptor::sync(const QString &dataTypeString, int accoun
 
     setStatus(SocialNetworkSyncAdaptor::Busy);
     updateDataForAccount(accountId);
-    qCDebug(lcSocialPlugin) << "successfully triggered sync with profile:" << m_accountSyncProfile->name();
+    qCDebug(lcMastodonSync) << "successfully triggered sync with profile:" << m_accountSyncProfile->name();
 }
 
 void MastodonDataTypeSyncAdaptor::updateDataForAccount(int accountId)
 {
     Accounts::Account *account = Accounts::Account::fromId(m_accountManager, accountId, this);
     if (!account) {
-        qCWarning(lcSocialPlugin) << "existing account with id" << accountId << "couldn't be retrieved";
+        qCWarning(lcMastodonSync) << "existing account with id" << accountId << "couldn't be retrieved";
         setStatus(SocialNetworkSyncAdaptor::Error);
         return;
     }
@@ -74,7 +76,7 @@ void MastodonDataTypeSyncAdaptor::errorHandler(QNetworkReply::NetworkError err)
     const int accountId = reply->property("accountId").toInt();
     const int httpStatus = reply->attribute(QNetworkRequest::HttpStatusCodeAttribute).toInt();
 
-    qCWarning(lcSocialPlugin) << SocialNetworkSyncAdaptor::dataTypeName(m_dataType)
+    qCWarning(lcMastodonSync) << SocialNetworkSyncAdaptor::dataTypeName(m_dataType)
                               << "request with account" << accountId
                               << "experienced error:" << err
                               << "HTTP:" << httpStatus;
@@ -99,7 +101,7 @@ void MastodonDataTypeSyncAdaptor::sslErrorsHandler(const QList<QSslError> &errs)
         sslerrs.chop(2);
     }
 
-    qCWarning(lcSocialPlugin) << SocialNetworkSyncAdaptor::dataTypeName(m_dataType)
+    qCWarning(lcMastodonSync) << SocialNetworkSyncAdaptor::dataTypeName(m_dataType)
                               << "request with account" << sender()->property("accountId").toInt()
                               << "experienced ssl errors:" << sslerrs;
     sender()->setProperty("isError", QVariant::fromValue<bool>(true));
@@ -107,7 +109,7 @@ void MastodonDataTypeSyncAdaptor::sslErrorsHandler(const QList<QSslError> &errs)
 
 void MastodonDataTypeSyncAdaptor::setCredentialsNeedUpdate(Accounts::Account *account)
 {
-    qCInfo(lcSocialPlugin) << "sociald:Mastodon: setting CredentialsNeedUpdate to true for account:" << account->id();
+    qCInfo(lcMastodonSync) << "sociald:Mastodon: setting CredentialsNeedUpdate to true for account:" << account->id();
     Accounts::Service srv(m_accountManager->service(syncServiceName()));
     account->selectService(srv);
     account->setValue(QStringLiteral("CredentialsNeedUpdate"), QVariant::fromValue<bool>(true));
@@ -130,7 +132,7 @@ void MastodonDataTypeSyncAdaptor::signIn(Accounts::Account *account)
             ? SignOn::Identity::existingIdentity(account->credentialsId())
             : 0;
     if (!identity) {
-        qCWarning(lcSocialPlugin) << "account" << accountId << "has no valid credentials, cannot sign in";
+        qCWarning(lcMastodonSync) << "account" << accountId << "has no valid credentials, cannot sign in";
         decrementSemaphore(accountId);
         return;
     }
@@ -140,7 +142,7 @@ void MastodonDataTypeSyncAdaptor::signIn(Accounts::Account *account)
     const QString mechanism = accSrv.authData().mechanism();
     SignOn::AuthSession *session = identity->createSession(method);
     if (!session) {
-        qCWarning(lcSocialPlugin) << "could not create signon session for account" << accountId;
+        qCWarning(lcMastodonSync) << "could not create signon session for account" << accountId;
         identity->deleteLater();
         decrementSemaphore(accountId);
         return;
@@ -168,7 +170,7 @@ void MastodonDataTypeSyncAdaptor::signOnError(const SignOn::Error &error)
     SignOn::Identity *identity = session->property("identity").value<SignOn::Identity*>();
     const int accountId = account->id();
 
-    qCWarning(lcSocialPlugin) << "credentials for account with id" << accountId
+    qCWarning(lcMastodonSync) << "credentials for account with id" << accountId
                               << "couldn't be retrieved:" << error.type() << error.message();
 
     if (error.type() == SignOn::Error::UserInteraction) {
@@ -196,7 +198,7 @@ void MastodonDataTypeSyncAdaptor::signOnResponse(const SignOn::SessionData &resp
 
     accessToken = MastodonAuthUtils::accessToken(data);
     if (accessToken.isEmpty()) {
-        qCWarning(lcSocialPlugin) << "signon response for account with id" << accountId
+        qCWarning(lcMastodonSync) << "signon response for account with id" << accountId
                                   << "contained no access token; keys:" << data.keys();
     }
 
