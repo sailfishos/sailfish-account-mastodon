@@ -10,6 +10,7 @@ TARGET = $$qtLibraryTarget($$TARGET)
 MODULENAME = com/jolla/settings/accounts/mastodon
 TARGETPATH = $$[QT_INSTALL_QML]/$$MODULENAME
 
+QT -= gui
 QT += qml
 CONFIG += plugin
 

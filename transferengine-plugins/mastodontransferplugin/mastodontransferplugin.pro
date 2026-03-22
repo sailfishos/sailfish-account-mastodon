@@ -10,6 +10,7 @@ DEPENDPATH += .
 INCLUDEPATH += ..
 INCLUDEPATH += ../../common
 
+QT -= gui
 QT += network
 
 CONFIG += link_pkgconfig

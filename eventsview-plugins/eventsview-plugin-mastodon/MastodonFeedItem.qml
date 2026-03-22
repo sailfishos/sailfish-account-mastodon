@@ -7,20 +7,20 @@ import QtQuick 2.0
 import Sailfish.Silica 1.0
 import Sailfish.Share 1.0
 import org.nemomobile.lipstick 0.1
-import "shared"
+import Sailfish.SocialFeed 1.0
 
 SocialMediaFeedItem {
     id: item
 
     property variant imageList
-    property string resolvedStatusUrl: item.stringValue("url", "link", "uri")
+    property string resolvedStatusUrl: model && model.url ? model.url.toString() : ""
     property string postId
     property QtObject postActions
-    property int likeCount: item.intValue("favouritesCount", "likeCount", "favoriteCount")
-    property int commentCount: item.intValue("repliesCount", "commentCount")
-    property int boostCount: item.intValue("reblogsCount", "boostCount", "repostsCount")
-    property bool favourited: !!model.favourited
-    property bool reblogged: !!model.reblogged
+    property int likeCount: model && model.favouritesCount ? model.favouritesCount : 0
+    property int commentCount: model && model.repliesCount ? model.repliesCount : 0
+    property int boostCount: model && model.reblogsCount ? model.reblogsCount : 0
+    property bool favourited: model ? !!model.favourited : false
+    property bool reblogged: model ? !!model.reblogged : false
     property int _likeCountOverride: -1
     property int _boostCountOverride: -1
     property int _favouritedOverride: -1
@@ -38,6 +38,18 @@ SocialMediaFeedItem {
     property string _displayName: model && model.name ? model.name.toString() : ""
     property string _accountName: model && model.accountName ? model.accountName.toString() : ""
     property string _bodyText: model && model.body ? model.body.toString() : ""
+    //: Action label shown in Mastodon interaction menu.
+    //% "Favourite"
+    readonly property string _favouriteActionText: qsTrId("lipstick-jolla-home-la-mastodon_favourite")
+    //: Action label shown in Mastodon interaction menu when the post is already favourited.
+    //% "Unfavourite"
+    readonly property string _unfavouriteActionText: qsTrId("lipstick-jolla-home-la-mastodon_unfavourite")
+    //: Action label shown in Mastodon interaction menu.
+    //% "Boost"
+    readonly property string _boostActionText: qsTrId("lipstick-jolla-home-la-mastodon_boost")
+    //: Action label shown in Mastodon interaction menu when the post is already boosted.
+    //% "Undo boost"
+    readonly property string _unboostActionText: qsTrId("lipstick-jolla-home-la-mastodon_unboost")
     //: Action label shown in Mastodon interaction menu.
     //% "Share"
     readonly property string _shareActionText: qsTrId("lipstick-jolla-home-la-mastodon_share")
@@ -84,7 +96,7 @@ SocialMediaFeedItem {
     topMargin: item._booster.length > 0 ? Theme.paddingMedium : Theme.paddingLarge
     userRemovable: false
 
-    Image {
+    SocialReshareIcon {
         id: boosterIcon
 
         anchors {
@@ -93,21 +105,17 @@ SocialMediaFeedItem {
             topMargin: item.topMargin
         }
         visible: item._booster.length > 0
-        source: "image://theme/icon-s-repost" + (item.highlighted ? "?" + Theme.highlightColor : "")
+        highlighted: item.highlighted
+        iconSource: "image://theme/icon-s-repost"
     }
 
-    Text {
+    SocialReshareText {
         anchors {
             left: content.left
             right: content.right
             verticalCenter: boosterIcon.verticalCenter
         }
-        elide: Text.ElideRight
-        font.pixelSize: Theme.fontSizeExtraSmall
-        color: item.highlighted ? Theme.secondaryHighlightColor : Theme.secondaryColor
-        textFormat: Text.PlainText
-        visible: text.length > 0
-
+        highlighted: item.highlighted
         text: item._booster.length > 0
               ? //: Shown above a post that is boosted by another user. %1 = name of user who boosted
                 //% "%1 boosted"
@@ -155,61 +163,18 @@ SocialMediaFeedItem {
             plainText: item._bodyText
         }
 
-        Row {
+        SocialPostMetadataRow {
             id: metadataRow
 
             width: parent.width
-            height: previewRow.visible ? implicitHeight + Theme.paddingMedium : implicitHeight    // add padding below
-            spacing: Theme.paddingSmall
-
-            readonly property color passiveColor: item.highlighted ? Theme.secondaryHighlightColor : Theme.secondaryColor
-            readonly property color activeColor: Theme.highlightColor
-
-            Label {
-                font.pixelSize: Theme.fontSizeExtraSmall
-                text: "↩ " + item.commentCount
-                color: metadataRow.passiveColor
-            }
-
-            Label {
-                font.pixelSize: Theme.fontSizeExtraSmall
-                text: "|"
-                color: metadataRow.passiveColor
-            }
-
-            Label {
-                font.pixelSize: Theme.fontSizeExtraSmall
-                text: "★ " + (item._likeCountOverride >= 0 ? item._likeCountOverride : item.likeCount)
-                color: item.isFavourited ? metadataRow.activeColor : metadataRow.passiveColor
-            }
-
-            Label {
-                font.pixelSize: Theme.fontSizeExtraSmall
-                text: "|"
-                color: metadataRow.passiveColor
-            }
-
-            Label {
-                font.pixelSize: Theme.fontSizeExtraSmall
-                text: "↻ " + (item._boostCountOverride >= 0 ? item._boostCountOverride : item.boostCount)
-                color: item.isReblogged ? metadataRow.activeColor : metadataRow.passiveColor
-            }
-
-            Label {
-                visible: item.formattedTime.length > 0
-                font.pixelSize: Theme.fontSizeExtraSmall
-                text: "|"
-                color: metadataRow.passiveColor
-            }
-
-            Label {
-                visible: item.formattedTime.length > 0
-                width: Math.max(0, metadataRow.width - x)
-                truncationMode: TruncationMode.Fade
-                font.pixelSize: Theme.fontSizeExtraSmall
-                text: item.formattedTime
-                color: metadataRow.passiveColor
-            }
+            highlighted: item.highlighted
+            commentCount: item.commentCount
+            likeCount: item._likeCountOverride >= 0 ? item._likeCountOverride : item.likeCount
+            repostCount: item._boostCountOverride >= 0 ? item._boostCountOverride : item.boostCount
+            liked: item.isFavourited
+            reposted: item.isReblogged
+            timeText: item.formattedTime
+            addBottomPadding: previewRow.visible
         }
 
         SocialMediaPreviewRow {
@@ -225,39 +190,11 @@ SocialMediaFeedItem {
         }
     }
 
-    function stringValue() {
-        for (var i = 0; i < arguments.length; ++i) {
-            var value = model[arguments[i]]
-            if (typeof value === "undefined" || value === null) {
-                continue
-            }
-            value = String(value)
-            if (value.length > 0) {
-                return value
-            }
-        }
-        return ""
-    }
-
-    function intValue() {
-        for (var i = 0; i < arguments.length; ++i) {
-            var value = model[arguments[i]]
-            if (typeof value === "undefined" || value === null) {
-                continue
-            }
-            var number = Number(value)
-            if (!isNaN(number)) {
-                return Math.max(0, Math.floor(number))
-            }
-        }
-        return 0
-    }
-
     function actionPostId() {
         if (item.postId.length > 0) {
             return item.postId
         }
-        return item.stringValue("mastodonId", "statusId", "id", "twitterId")
+        return model && model.mastodonId ? model.mastodonId.toString() : ""
     }
 
     function actionAccountId() {
@@ -266,7 +203,7 @@ SocialMediaFeedItem {
     }
 
     function shareStatusUrl() {
-        return item.stringValue("url", "link", "uri")
+        return model && model.url ? model.url.toString() : ""
     }
 
     function topLevelParent() {
@@ -325,141 +262,78 @@ SocialMediaFeedItem {
     Component {
         id: actionMenuComponent
 
-        ContextMenu {
+        SocialInteractionContextMenu {
             id: actionMenu
-            property bool menuOpen: height > 0
-            property bool wasOpened: false
             z: 10000
-
-            onPositionChanged: {
-                horizontalActions.xPos = _contentColumn.mapFromItem(actionMenu, mouse.x, mouse.y).x
-            }
-
-            onMenuOpenChanged: {
-                if (menuOpen) {
-                    wasOpened = true
-                    item._contextMenuOpen = true
-                } else if (wasOpened) {
-                    item._contextMenuOpen = false
-                    destroy()
-                    item._actionMenu = null
+            mapSourceItem: _contentColumn
+            actionEnabled: item.postActions
+                           && item.actionPostId().length > 0
+                           && item.actionAccountId() >= 0
+                           && !item.lockScreenActive
+                           && !item.housekeeping
+            interactionItems: [
+                {
+                    name: "like",
+                    // U+2605 BLACK STAR
+                    symbol: "\u2605",
+                    active: item.isFavourited,
+                    inactiveText: item._favouriteActionText,
+                    activeText: item._unfavouriteActionText
+                },
+                {
+                    name: "reblog",
+                    // U+21BB CLOCKWISE OPEN CIRCLE ARROW
+                    symbol: "\u21BB",
+                    active: item.isReblogged,
+                    inactiveText: item._boostActionText,
+                    activeText: item._unboostActionText
+                },
+                {
+                    name: "share",
+                    // U+260D OPPOSITION (ironic doncha think)
+                    symbol: "\u260D",
+                    active: false,
+                    inactiveText: item._shareActionText,
+                    activeText: item._shareActionText
                 }
+            ]
+
+            onInteractionMenuOpened: item._contextMenuOpen = true
+            onInteractionMenuClosed: {
+                item._contextMenuOpen = false
+                destroy()
+                item._actionMenu = null
             }
 
-            Item {
-                id: horizontalActions
-
-                // Makes Silica treat this custom row as a context-menu item.
-                property int __silica_menuitem
-                property bool down
-                property bool highlighted
-                signal clicked
-
-                property real xPos: 0
-                property int hoveredIndex: -1
-                readonly property bool actionEnabled: item.postActions
-                                                    && item.actionPostId().length > 0
-                                                    && item.actionAccountId() >= 0
-                                                    && !item.lockScreenActive
-                                                    && !item.housekeeping
-
-                width: parent.width
-                height: Theme.itemSizeMedium
-
-                onXPosChanged: hoveredIndex = Math.max(0, Math.min(2, Math.floor((xPos * 3) / Math.max(1, width))))
-                onDownChanged: if (!down) hoveredIndex = -1
-
-                onClicked: {
-                    xPos = _contentColumn.mapFromItem(actionMenu, actionMenu.mouseX, actionMenu.mouseY).x
-                    var index = hoveredIndex >= 0 ? hoveredIndex : Math.max(0, Math.min(2, Math.floor((xPos * 3) / Math.max(1, width))))
-                    if (!actionEnabled) {
+            onInteractionTriggered: function(actionName) {
+                if (!actionEnabled) {
+                    return
+                }
+                var postId = item.actionPostId()
+                var accountId = item.actionAccountId()
+                if (actionName === "like") {
+                    if (item.isFavourited) {
+                        item.postActions.unfavourite(accountId, postId)
+                    } else {
+                        item.postActions.favourite(accountId, postId)
+                    }
+                } else if (actionName === "reblog") {
+                    if (item.isReblogged) {
+                        item.postActions.unboost(accountId, postId)
+                    } else {
+                        item.postActions.boost(accountId, postId)
+                    }
+                } else if (actionName === "share") {
+                    var shareUrl = item.shareStatusUrl()
+                    if (shareUrl.length === 0) {
                         return
                     }
-                    var postId = item.actionPostId()
-                    var accountId = item.actionAccountId()
-                    if (index === 0) {
-                        if (item.isFavourited) {
-                            item.postActions.unfavourite(accountId, postId)
-                        } else {
-                            item.postActions.favourite(accountId, postId)
-                        }
-                    } else if (index === 1) {
-                        if (item.isReblogged) {
-                            item.postActions.unboost(accountId, postId)
-                        } else {
-                            item.postActions.boost(accountId, postId)
-                        }
-                    } else {
-                        var shareUrl = item.shareStatusUrl()
-                        if (shareUrl.length === 0) {
-                            return
-                        }
-                        item._shareAction.resources = [{
-                            "data": shareUrl,
-                            "linkTitle": item._shareLinkTitle,
-                            "type": "text/x-url"
-                        }]
-                        item._shareAction.trigger()
-                    }
-                }
-
-                Rectangle {
-                    anchors.verticalCenter: parent.verticalCenter
-                    x: (horizontalActions.hoveredIndex >= 0 ? horizontalActions.hoveredIndex : 0) * (parent.width / 3)
-                    width: parent.width / 3
-                    height: parent.height
-                    visible: horizontalActions.down && horizontalActions.hoveredIndex >= 0
-                    color: Theme.rgba(Theme.highlightBackgroundColor, Theme.highlightBackgroundOpacity)
-                }
-
-                Row {
-                    anchors.fill: parent
-
-                    Label {
-                        width: parent.width / 3
-                        height: parent.height
-                        horizontalAlignment: Text.AlignHCenter
-                        verticalAlignment: Text.AlignVCenter
-                        font.pixelSize: Theme.fontSizeExtraLarge
-                        text: "★"
-                        color: horizontalActions.actionEnabled
-                               ? (item.isFavourited
-                                  ? Theme.highlightColor
-                                  : ((horizontalActions.down && horizontalActions.hoveredIndex === 0)
-                                     || (horizontalActions.highlighted && horizontalActions.hoveredIndex === 0)
-                                     ? Theme.secondaryHighlightColor : Theme.primaryColor))
-                               : Theme.rgba(Theme.secondaryColor, 0.4)
-                    }
-
-                    Label {
-                        width: parent.width / 3
-                        height: parent.height
-                        horizontalAlignment: Text.AlignHCenter
-                        verticalAlignment: Text.AlignVCenter
-                        font.pixelSize: Theme.fontSizeExtraLarge
-                        text: "↻"
-                        color: horizontalActions.actionEnabled
-                               ? (item.isReblogged
-                                  ? Theme.highlightColor
-                                  : ((horizontalActions.down && horizontalActions.hoveredIndex === 1)
-                                     || (horizontalActions.highlighted && horizontalActions.hoveredIndex === 1)
-                                     ? Theme.secondaryHighlightColor : Theme.primaryColor))
-                               : Theme.rgba(Theme.secondaryColor, 0.4)
-                    }
-
-                    Label {
-                        width: parent.width / 3
-                        height: parent.height
-                        horizontalAlignment: Text.AlignHCenter
-                        verticalAlignment: Text.AlignVCenter
-                        font.pixelSize: Theme.fontSizeExtraLarge
-                        text: "\u260D"
-                        color: horizontalActions.actionEnabled
-                               ? (((horizontalActions.down && horizontalActions.hoveredIndex === 2)
-                                   || (horizontalActions.highlighted && horizontalActions.hoveredIndex === 2))
-                                  ? Theme.secondaryHighlightColor : Theme.primaryColor)
-                               : Theme.rgba(Theme.secondaryColor, 0.4)
-                    }
+                    item._shareAction.resources = [{
+                        "data": shareUrl,
+                        "linkTitle": item._shareLinkTitle,
+                        "type": "text/x-url"
+                    }]
+                    item._shareAction.trigger()
                 }
             }
         }

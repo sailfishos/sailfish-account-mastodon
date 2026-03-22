@@ -8,10 +8,11 @@ import Sailfish.Silica 1.0
 import org.nemomobile.socialcache 1.0
 import com.jolla.eventsview.mastodon 1.0
 import QtQml.Models 2.1
-import "shared"
+import Sailfish.SocialFeed 1.0
 
 SocialMediaAccountDelegate {
     id: delegateItem
+    property string instanceHomeUrl: ""
 
     //: Mastodon posts
     //% "Posts"
@@ -20,39 +21,35 @@ SocialMediaAccountDelegate {
     showRemainingCount: false
 
     services: ["Posts"]
-    socialNetwork: 9
+    socialNetwork: SocialSync.Mastodon
     dataType: SocialSync.Posts
     providerName: "mastodon"
+    periodicSyncLoopEnabled: true
 
     MastodonPostActions {
         id: mastodonPostActions
     }
 
-    model: MastodonPostsModel {
-        onCountChanged: {
-            if (count > 0) {
-                if (!updateTimer.running) {
-                    shortUpdateTimer.start()
-                }
-            } else {
-                shortUpdateTimer.stop()
-            }
-        }
-    }
+    model: MastodonPostsModel {}
 
     delegate: MastodonFeedItem {
         downloader: delegateItem.downloader
-        imageList: delegateItem.variantRole(model, ["images", "mediaAttachments", "media"])
-        avatarSource: delegateItem.convertUrl(delegateItem.stringRole(model, ["icon", "avatar", "avatarUrl"]))
-        fallbackAvatarSource: delegateItem.stringRole(model, ["icon", "avatar", "avatarUrl"])
+        imageList: model.images
+        avatarSource: model.icon
+        fallbackAvatarSource: model.icon
         resolvedStatusUrl: delegateItem.authorizeInteractionUrl(model)
-        postId: delegateItem.stringRole(model, ["mastodonId", "statusId", "id", "twitterId"])
+        postId: model.mastodonId
         postActions: mastodonPostActions
-        accountId: delegateItem.firstAccountId(model)
+        accountId: delegateItem.firstAccountId(model, -1)
 
-        onTriggered: Qt.openUrlExternally(resolvedStatusUrl)
+        onTriggered: {
+            if (resolvedStatusUrl.length > 0) {
+                Qt.openUrlExternally(resolvedStatusUrl)
+            }
+        }
 
         Component.onCompleted: {
+            delegateItem.instanceHomeUrl = statusUrl({instanceUrl: model.instanceUrl})
             refreshTimeCount = Qt.binding(function() { return delegateItem.refreshTimeCount })
             connectedToNetwork = Qt.binding(function() { return delegateItem.connectedToNetwork })
             eventsColumnMaxWidth = Qt.binding(function() { return delegateItem.eventsColumnMaxWidth })
@@ -61,101 +58,61 @@ SocialMediaAccountDelegate {
     //% "Show more in Mastodon"
     expandedLabel: qsTrId("lipstick-jolla-home-la-show-more-in-mastodon")
 
-    onHeaderClicked: Qt.openUrlExternally("https://mastodon.social/explore")
-    onExpandedClicked: Qt.openUrlExternally("https://mastodon.social/explore")
+    onHeaderClicked: {
+        if (delegateItem.instanceHomeUrl.length > 0) {
+            Qt.openUrlExternally(delegateItem.instanceHomeUrl)
+        }
+    }
+    onExpandedClicked: {
+        if (delegateItem.instanceHomeUrl.length > 0) {
+            Qt.openUrlExternally(delegateItem.instanceHomeUrl)
+        }
+    }
 
     onViewVisibleChanged: {
         if (viewVisible) {
             delegateItem.resetHasSyncableAccounts()
             delegateItem.model.refresh()
-            if (delegateItem.hasSyncableAccounts && !updateTimer.running) {
-                shortUpdateTimer.start()
+            if (delegateItem.hasSyncableAccounts) {
+                delegateItem.startPeriodicSyncLoop()
             }
         } else {
-            shortUpdateTimer.stop()
+            delegateItem.stopPeriodicSyncLoop()
         }
     }
 
     onConnectedToNetworkChanged: {
         if (viewVisible) {
-            if (!updateTimer.running) {
-                shortUpdateTimer.start()
-            }
+            delegateItem.startPeriodicSyncLoop()
         }
     }
 
-    // The Mastodon feed is updated 3 seconds after the feed view becomes visible,
-    // unless it has been updated during last 60 seconds. After that it will be updated
-    // periodically in every 60 seconds as long as the feed view is visible.
+    Connections {
+        target: delegateItem.model
 
-    Timer {
-        id: shortUpdateTimer
-
-        interval: 3000
-        onTriggered: {
-            delegateItem.sync()
-            updateTimer.start()
-        }
-    }
-
-    Timer {
-        id: updateTimer
-
-        interval: 60000
-        repeat: true
-        onTriggered: {
-            if (delegateItem.viewVisible) {
-                delegateItem.sync()
-            } else {
-                stop()
+        onCountChanged: {
+            if (target.count === 0) {
+                delegateItem.instanceHomeUrl = ""
             }
         }
-    }
-
-    function variantRole(modelData, roleNames) {
-        for (var i = 0; i < roleNames.length; ++i) {
-            var value = modelData[roleNames[i]]
-            if (typeof value !== "undefined" && value !== null) {
-                return value
-            }
-        }
-        return undefined
-    }
-
-    function stringRole(modelData, roleNames) {
-        for (var i = 0; i < roleNames.length; ++i) {
-            var value = modelData[roleNames[i]]
-            if (typeof value === "undefined" || value === null) {
-                continue
-            }
-            value = String(value)
-            if (value.length > 0) {
-                return value
-            }
-        }
-        return ""
     }
 
     function statusUrl(modelData) {
-        var directUrl = stringRole(modelData, ["url", "link", "uri"])
+        var directUrl = modelData && modelData.url ? modelData.url.toString() : ""
         if (directUrl.length > 0) {
             return directUrl
         }
 
-        var instanceUrl = stringRole(modelData, ["instanceUrl", "serverUrl", "baseUrl"])
+        var instanceUrl = modelData && modelData.instanceUrl ? modelData.instanceUrl.toString() : ""
+        instanceUrl = stripTrailingSlashes(instanceUrl)
         if (instanceUrl.length === 0) {
-            instanceUrl = "https://mastodon.social"
-        }
-        while (instanceUrl.length > 0 && instanceUrl.charAt(instanceUrl.length - 1) === "/") {
-            instanceUrl = instanceUrl.slice(0, instanceUrl.length - 1)
+            return ""
         }
 
-        var accountName = stringRole(modelData, ["accountName", "acct", "screenName", "username"])
-        var statusId = stringRole(modelData, ["mastodonId", "statusId", "id", "twitterId"])
+        var accountName = modelData && modelData.accountName ? modelData.accountName.toString() : ""
+        var statusId = modelData && modelData.mastodonId ? modelData.mastodonId.toString() : ""
         if (accountName.length > 0 && statusId.length > 0) {
-            while (accountName.length > 0 && accountName.charAt(0) === "@") {
-                accountName = accountName.substring(1)
-            }
+            accountName = trimLeadingCharacter(accountName, "@")
             return instanceUrl + "/@" + accountName + "/" + statusId
         }
 
@@ -168,13 +125,11 @@ SocialMediaAccountDelegate {
             return targetUrl
         }
 
-        var instanceUrl = stringRole(modelData, ["instanceUrl", "serverUrl", "baseUrl"])
+        var instanceUrl = modelData && modelData.instanceUrl ? modelData.instanceUrl.toString() : ""
         if (instanceUrl.length === 0) {
             return targetUrl
         }
-        while (instanceUrl.length > 0 && instanceUrl.charAt(instanceUrl.length - 1) === "/") {
-            instanceUrl = instanceUrl.slice(0, instanceUrl.length - 1)
-        }
+        instanceUrl = stripTrailingSlashes(instanceUrl)
 
         // Links on the user's own instance should open directly.
         var sameServer = /^([a-z][a-z0-9+.-]*):\/\/([^\/?#]+)/i
@@ -191,23 +146,34 @@ SocialMediaAccountDelegate {
         return instanceUrl + "/authorize_interaction?uri=" + encodeURIComponent(targetUrl)
     }
 
-    function convertUrl(source) {
-        if (source.indexOf("_normal.") !== -1) {
-            return source.replace("_normal.", "_bigger.")
-        } else if (source.indexOf("_mini.") !== -1) {
-            return source.replace("_mini.", "_bigger.")
+    function firstAccountId(modelData, defaultValue) {
+        var fallback = typeof defaultValue === "undefined" ? -1 : Number(defaultValue)
+        var accounts = modelData ? modelData.accounts : undefined
+        if (!accounts || accounts.length <= 0) {
+            return fallback
         }
-        return source
+
+        var accountId = Number(accounts[0])
+        return isNaN(accountId) ? fallback : accountId
     }
 
-    function firstAccountId(modelData) {
-        var accounts = modelData.accounts
-        if (accounts && accounts.length > 0) {
-            var accountId = Number(accounts[0])
-            if (!isNaN(accountId)) {
-                return accountId
-            }
+    function stripTrailingSlashes(value) {
+        value = String(value || "")
+        while (value.length > 0 && value.charAt(value.length - 1) === "/") {
+            value = value.slice(0, value.length - 1)
         }
-        return -1
+        return value
+    }
+
+    function trimLeadingCharacter(value, character) {
+        value = String(value || "")
+        if (!character || character.length === 0) {
+            return value
+        }
+
+        while (value.length > 0 && value.charAt(0) === character) {
+            value = value.substring(1)
+        }
+        return value
     }
 }

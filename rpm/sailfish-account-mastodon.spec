@@ -22,15 +22,18 @@ BuildRequires: pkgconfig(buteosyncfw5) >= 0.10.0
 BuildRequires: pkgconfig(accounts-qt5)
 BuildRequires: pkgconfig(libsignon-qt5)
 BuildRequires: pkgconfig(socialcache)
+BuildRequires: pkgconfig(buteosocialcommon)
 BuildRequires: pkgconfig(libsailfishkeyprovider)
 BuildRequires: pkgconfig(sailfishaccounts)
 BuildRequires: pkgconfig(nemotransferengine-qt5) >= 2.0.0
 BuildRequires: pkgconfig(nemonotifications-qt5)
 Requires: jolla-settings-accounts-extensions-onlinesync
 Requires: buteo-syncfw-qt5-msyncd
+Requires: buteo-sync-plugins-social >= 0.4.0
 Requires: systemd
 Requires: lipstick-jolla-home-qt5-components >= 1.2.50
-Requires: eventsview-extensions
+Requires: sailfish-components-social
+Requires: eventsview-extensions >= 0.1.9-2
 Requires: sailfishsilica-qt5 >= 1.1.108
 Requires: declarative-transferengine-qt5 >= 0.3.13
 Requires: nemo-transferengine-qt5 >= 2.0.0
@@ -63,33 +66,9 @@ Translation source files for sailfish-account-mastodon components.
 %{_libexecdir}/manage-groups add account-mastodon || :
 systemctl-user try-restart msyncd.service || :
 
-%posttrans
-# Pre-4.6 SailfishOS resolves theme icons from the legacy meegotouch tree.
-# If that theme exists, point it at the packaged silica icons.
-theme_dir=%{_datadir}/themes/sailfish-default
-legacy_dir="$theme_dir/meegotouch"
-if [ -d "$legacy_dir" ]; then
-    for icon in "$theme_dir"/silica/*/icons/icon-l-mastodon.png; do
-        [ -e "$icon" ] || continue
-        scale="$(basename "$(dirname "$(dirname "$icon")")")"
-        target_dir="$legacy_dir/$scale/icons"
-        [ -d "$target_dir" ] || continue
-        ln -sfn "../../../silica/${scale}/icons/icon-l-mastodon.png" \
-            "$target_dir/icon-l-mastodon.png"
-    done
-fi
-
 %postun
 /sbin/ldconfig
 if [ "$1" -eq 0 ]; then
-    theme_dir=%{_datadir}/themes/sailfish-default
-    legacy_dir="$theme_dir/meegotouch"
-    if [ -d "$legacy_dir" ]; then
-        for icon in "$legacy_dir"/*/icons/icon-l-mastodon.png; do
-            [ -L "$icon" ] || continue
-            rm -f "$icon"
-        done
-    fi
     %{_libexecdir}/manage-groups remove account-mastodon || :
 fi
 
@@ -98,8 +77,6 @@ fi
 %license LICENSES/LGPL-2.1-or-later.txt
 %{_libdir}/libmastodoncommon.so.*
 %exclude %{_libdir}/libmastodoncommon.so
-%{_libdir}/libmastodonbuteocommon.so.*
-%exclude %{_libdir}/libmastodonbuteocommon.so
 %{_datadir}/accounts/providers/mastodon.provider
 %{_datadir}/accounts/services/mastodon-microblog.service
 %{_datadir}/accounts/services/mastodon-notifications.service

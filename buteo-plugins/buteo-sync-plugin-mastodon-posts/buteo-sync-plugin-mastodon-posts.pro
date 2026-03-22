@@ -7,11 +7,17 @@ TARGET = mastodon-posts-client
 
 QT -= gui
 
-include($$PWD/../buteo-common/buteo-common.pri)
 include($$PWD/../../common/common.pri)
 
 CONFIG += link_pkgconfig
-PKGCONFIG += mlite5 nemonotifications-qt5
+PKGCONFIG += \
+    buteosocialcommon \
+    socialcache \
+    accounts-qt5 \
+    buteosyncfw5 \
+    libsignon-qt5 \
+    mlite5 \
+    nemonotifications-qt5
 
 INCLUDEPATH += $$PWD
 

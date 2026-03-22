@@ -7,7 +7,6 @@ TARGET = mastodon-notifications-client
 
 QT -= gui
 
-include($$PWD/../buteo-common/buteo-common.pri)
 include($$PWD/../../common/common.pri)
 
 TS_FILE = $$OUT_PWD/lipstick-jolla-home-mastodon-notifications.ts
@@ -36,7 +35,14 @@ QMAKE_EXTRA_TARGETS += ts engineering_english
 PRE_TARGETDEPS += ts engineering_english
 
 CONFIG += link_pkgconfig
-PKGCONFIG += mlite5 nemonotifications-qt5
+PKGCONFIG += \
+    buteosocialcommon \
+    socialcache \
+    accounts-qt5 \
+    buteosyncfw5 \
+    libsignon-qt5 \
+    mlite5 \
+    nemonotifications-qt5
 
 INCLUDEPATH += $$PWD
 

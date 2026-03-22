@@ -10,6 +10,7 @@ TARGET = $$qtLibraryTarget($$TARGET)
 MODULENAME = com/jolla/eventsview/mastodon
 TARGETPATH = $$[QT_INSTALL_QML]/$$MODULENAME
 
+QT -= gui
 QT += qml network
 CONFIG += plugin link_pkgconfig
 PKGCONFIG += socialcache accounts-qt5 libsignon-qt5 sailfishaccounts

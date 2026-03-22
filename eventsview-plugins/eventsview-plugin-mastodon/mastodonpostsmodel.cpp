@@ -4,31 +4,7 @@
 // SPDX-License-Identifier: LGPL-2.1-or-later
 
 #include "mastodonpostsmodel.h"
-#include <QtCore/QVariantMap>
-
-namespace {
-
-const char *URL_KEY = "url";
-const char *TYPE_KEY = "type";
-const char *TYPE_PHOTO = "photo";
-const char *TYPE_VIDEO = "video";
-
-QVariantMap createImageData(const SocialPostImage::ConstPtr &image)
-{
-    QVariantMap imageData;
-    imageData.insert(QLatin1String(URL_KEY), image->url());
-    switch (image->type()) {
-    case SocialPostImage::Video:
-        imageData.insert(QLatin1String(TYPE_KEY), QLatin1String(TYPE_VIDEO));
-        break;
-    default:
-        imageData.insert(QLatin1String(TYPE_KEY), QLatin1String(TYPE_PHOTO));
-        break;
-    }
-    return imageData;
-}
-
-}
+#include <socialcache/socialposthelpers.h>
 
 MastodonPostsModel::MastodonPostsModel(QObject *parent)
     : QAbstractListModel(parent)
@@ -110,13 +86,16 @@ void MastodonPostsModel::postsChanged()
         const bool favourited = m_database.favourited(post);
         const bool reblogged = m_database.reblogged(post);
 
-        eventMap.insert(MastodonPostsModel::MastodonId, post->identifier());
-        eventMap.insert(MastodonPostsModel::Name, post->name());
+        SocialPostHelpers::appendCommonPostFields(&eventMap, post,
+                                                  MastodonPostsModel::MastodonId,
+                                                  MastodonPostsModel::Name,
+                                                  MastodonPostsModel::Body,
+                                                  MastodonPostsModel::Timestamp,
+                                                  MastodonPostsModel::Icon,
+                                                  MastodonPostsModel::Images,
+                                                  MastodonPostsModel::Accounts);
         eventMap.insert(MastodonPostsModel::AccountName, accountName);
         eventMap.insert(MastodonPostsModel::Acct, accountName);
-        eventMap.insert(MastodonPostsModel::Body, post->body());
-        eventMap.insert(MastodonPostsModel::Timestamp, post->timestamp());
-        eventMap.insert(MastodonPostsModel::Icon, post->icon());
         eventMap.insert(MastodonPostsModel::Url, postUrl);
         eventMap.insert(MastodonPostsModel::Link, postUrl);
         eventMap.insert(MastodonPostsModel::BoostedBy, boostedBy);
@@ -127,18 +106,6 @@ void MastodonPostsModel::postsChanged()
         eventMap.insert(MastodonPostsModel::Favourited, favourited);
         eventMap.insert(MastodonPostsModel::Reblogged, reblogged);
         eventMap.insert(MastodonPostsModel::InstanceUrl, m_database.instanceUrl(post));
-
-        QVariantList images;
-        Q_FOREACH (const SocialPostImage::ConstPtr &image, post->images()) {
-            images.append(createImageData(image));
-        }
-        eventMap.insert(MastodonPostsModel::Images, images);
-
-        QVariantList accountsVariant;
-        Q_FOREACH (int account, post->accounts()) {
-            accountsVariant.append(account);
-        }
-        eventMap.insert(MastodonPostsModel::Accounts, accountsVariant);
         data.append(eventMap);
     }
 
