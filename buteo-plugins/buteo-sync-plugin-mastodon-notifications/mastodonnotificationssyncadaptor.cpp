@@ -57,6 +57,7 @@ namespace {
     const char *const NotificationIdHint = "x-nemo.sociald.notification-id";
     const char *const LastFetchedNotificationIdKey = "LastFetchedNotificationId";
     const int NotificationsPageLimit = 80;
+    const uint NotificationDismissedReason = 1;
 
     //% "mentioned you"
     const char *const TrIdMentionedYou = QT_TRID_NOOP("lipstick-jolla-home-la-mastodon-notification-mentioned_you");
@@ -240,13 +241,14 @@ namespace {
         return QString();
     }
 
-    bool hasActiveNotificationsForAccount(int accountId)
+    bool hasActiveNotificationsForAccount(int accountId, const Notification *ignoredNotification = 0)
     {
         bool hasActiveNotifications = false;
         const QList<QObject *> notifications = Notification::notifications();
         foreach (QObject *object, notifications) {
             Notification *notification = qobject_cast<Notification *>(object);
             if (notification
+                    && notification != ignoredNotification
                     && notification->category() == QLatin1String(NotificationCategory)
                     && notification->hintValue("x-nemo.sociald.account-id").toInt() == accountId) {
                 hasActiveNotifications = true;
@@ -312,6 +314,7 @@ void MastodonNotificationsSyncAdaptor::purgeDataForOldAccount(int oldId, SocialN
 {
     closeAccountNotifications(oldId);
 
+    m_accessTokens.remove(oldId);
     m_pendingSyncStates.remove(oldId);
     m_lastMarkedReadIds.remove(oldId);
     saveLastFetchedId(oldId, QString());
@@ -319,6 +322,7 @@ void MastodonNotificationsSyncAdaptor::purgeDataForOldAccount(int oldId, SocialN
 
 void MastodonNotificationsSyncAdaptor::beginSync(int accountId, const QString &accessToken)
 {
+    m_accessTokens.insert(accountId, accessToken);
     m_pendingSyncStates.remove(accountId);
     requestUnreadMarker(accountId, accessToken);
 }
@@ -465,6 +469,7 @@ void MastodonNotificationsSyncAdaptor::finishedUnreadMarkerHandler()
 
     PendingSyncState state;
     state.accessToken = accessToken;
+    state.markerKnown = true;
     state.unreadFloorId = markerId;
     state.lastFetchedId = loadLastFetchedId(accountId);
     if (state.lastFetchedId.isEmpty() && !markerId.isEmpty()) {
@@ -576,6 +581,9 @@ void MastodonNotificationsSyncAdaptor::finishedNotificationsHandler()
     if (!isError && ok) {
         if (!notifications.size()) {
             qCDebug(lcMastodonNotifications) << "no notifications received for account" << accountId;
+            if (state.markerKnown) {
+                closeAccountNotifications(accountId);
+            }
             m_pendingSyncStates.remove(accountId);
             decrementSemaphore(accountId);
             return;
@@ -597,6 +605,10 @@ void MastodonNotificationsSyncAdaptor::finishedNotificationsHandler()
             if (pageMinNotificationId.isEmpty()
                     || compareNotificationIds(notificationId, pageMinNotificationId) < 0) {
                 pageMinNotificationId = notificationId;
+            }
+
+            if (state.markerKnown) {
+                state.unreadNotificationIds.insert(notificationId);
             }
 
             if (state.maxFetchedId.isEmpty()
@@ -703,6 +715,10 @@ void MastodonNotificationsSyncAdaptor::finishedNotificationsHandler()
             }
         }
 
+        if (state.markerKnown) {
+            closeAccountNotifications(accountId, state.unreadNotificationIds);
+        }
+
         if (!state.maxFetchedId.isEmpty()
                 && (state.lastFetchedId.isEmpty()
                     || compareNotificationIds(state.maxFetchedId, state.lastFetchedId) > 0)) {
@@ -715,10 +731,10 @@ void MastodonNotificationsSyncAdaptor::finishedNotificationsHandler()
         const QString currentMarkerId = m_lastMarkedReadIds.value(accountId);
         if (!markerId.isEmpty()
                 && !state.accessToken.isEmpty()
-                && !hasActiveNotificationsForAccount(accountId)
+                && state.markerKnown
                 && (currentMarkerId.isEmpty()
                     || compareNotificationIds(markerId, currentMarkerId) > 0)) {
-            requestMarkRead(accountId, state.accessToken, markerId);
+            maybeMarkAccountNotificationsRead(accountId, state.accessToken);
         }
     } else {
         qCWarning(lcMastodonNotifications) << "unable to parse notifications data from request with account" << accountId
@@ -795,6 +811,70 @@ void MastodonNotificationsSyncAdaptor::publishSystemNotification(int accountId,
     }
 }
 
+void MastodonNotificationsSyncAdaptor::notificationClosedWithReason(uint reason)
+{
+    Notification *notification = qobject_cast<Notification *>(sender());
+    removeCachedNotification(notification);
+    if (reason == NotificationDismissedReason) {
+        markReadFromNotification(notification);
+    }
+}
+
+void MastodonNotificationsSyncAdaptor::maybeMarkAccountNotificationsRead(int accountId,
+                                                                         const QString &accessToken,
+                                                                         Notification *ignoredNotification)
+{
+    if (accountId <= 0 || accessToken.isEmpty()) {
+        return;
+    }
+
+    if (hasActiveNotificationsForAccount(accountId, ignoredNotification)) {
+        return;
+    }
+
+    const QString lastReadId = loadLastFetchedId(accountId);
+    if (lastReadId.isEmpty()) {
+        return;
+    }
+
+    const QString currentMarkerId = m_lastMarkedReadIds.value(accountId);
+    if (!currentMarkerId.isEmpty() && compareNotificationIds(lastReadId, currentMarkerId) <= 0) {
+        return;
+    }
+
+    requestMarkRead(accountId, accessToken, lastReadId);
+}
+
+void MastodonNotificationsSyncAdaptor::markReadFromNotification(Notification *notification)
+{
+    if (!notification) {
+        return;
+    }
+
+    const int accountId = notification->hintValue("x-nemo.sociald.account-id").toInt();
+    const QString accessToken = m_accessTokens.value(accountId).trimmed();
+    if (accountId <= 0 || accessToken.isEmpty()) {
+        return;
+    }
+
+    maybeMarkAccountNotificationsRead(accountId, accessToken, notification);
+}
+
+void MastodonNotificationsSyncAdaptor::removeCachedNotification(Notification *notification)
+{
+    if (!notification) {
+        return;
+    }
+
+    const int accountId = notification->hintValue("x-nemo.sociald.account-id").toInt();
+    const QString notificationId = notification->hintValue(NotificationIdHint).toString();
+    if (accountId <= 0 || notificationId.isEmpty()) {
+        return;
+    }
+
+    m_notificationObjects.remove(notificationObjectKey(accountId, notificationId));
+}
+
 void MastodonNotificationsSyncAdaptor::closeAccountNotifications(int accountId,
                                                                  const QSet<QString> &keepNotificationIds)
 {
@@ -859,6 +939,7 @@ Notification *MastodonNotificationsSyncAdaptor::createNotification(int accountId
     notification->setHintValue("x-nemo-priority", 100); // Show on lockscreen
     notification->setCategory(QLatin1String(NotificationCategory));
 
+    connect(notification, SIGNAL(closed(uint)), this, SLOT(notificationClosedWithReason(uint)), Qt::UniqueConnection);
     m_notificationObjects.insert(objectKey, notification);
 
     return notification;
