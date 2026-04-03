@@ -4,7 +4,7 @@
 
 Name: sailfish-account-mastodon
 License: BSD-3-Clause AND LGPL-2.1-or-later
-Version: 1.0.1
+Version: 1.0.2
 Release: 1
 Source0: %{name}-%{version}.tar.bz2
 Summary: SailfishOS account plugin for Mastodon
@@ -63,9 +63,33 @@ Translation source files for sailfish-account-mastodon components.
 %{_libexecdir}/manage-groups add account-mastodon || :
 systemctl-user try-restart msyncd.service || :
 
+%posttrans
+# Pre-4.6 SailfishOS resolves theme icons from the legacy meegotouch tree.
+# If that theme exists, point it at the packaged silica icons.
+theme_dir=%{_datadir}/themes/sailfish-default
+legacy_dir="$theme_dir/meegotouch"
+if [ -d "$legacy_dir" ]; then
+    for icon in "$theme_dir"/silica/*/icons/icon-l-mastodon.png; do
+        [ -e "$icon" ] || continue
+        scale="$(basename "$(dirname "$(dirname "$icon")")")"
+        target_dir="$legacy_dir/$scale/icons"
+        [ -d "$target_dir" ] || continue
+        ln -sfn "../../../silica/${scale}/icons/icon-l-mastodon.png" \
+            "$target_dir/icon-l-mastodon.png"
+    done
+fi
+
 %postun
 /sbin/ldconfig
 if [ "$1" -eq 0 ]; then
+    theme_dir=%{_datadir}/themes/sailfish-default
+    legacy_dir="$theme_dir/meegotouch"
+    if [ -d "$legacy_dir" ]; then
+        for icon in "$legacy_dir"/*/icons/icon-l-mastodon.png; do
+            [ -L "$icon" ] || continue
+            rm -f "$icon"
+        done
+    fi
     %{_libexecdir}/manage-groups remove account-mastodon || :
 fi
 

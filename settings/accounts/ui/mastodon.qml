@@ -255,11 +255,14 @@ AccountCreationAgent {
                 width: parent.width - x * 2
                 spacing: Theme.paddingMedium
 
-                Icon {
+                Image {
                     id: promptIcon
                     width: Theme.iconSizeMedium
                     height: Theme.iconSizeMedium
                     source: "image://theme/icon-l-mastodon"
+                    fillMode: Image.PreserveAspectFit
+                    sourceSize.width: width
+                    sourceSize.height: height
                 }
 
                 //: Prompt shown in account setup before OAuth sign-in.
