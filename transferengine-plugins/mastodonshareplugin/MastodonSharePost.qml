@@ -1,8 +1,6 @@
-/*
- * SPDX-FileCopyrightText: 2013 - 2026 Jolla Ltd.
- *
- * SPDX-License-Identifier: BSD-3-Clause
- */
+// SPDX-FileCopyrightText: 2026 Jolla Mobile Ltd
+//
+// SPDX-License-Identifier: BSD-3-Clause
 
 import QtQuick 2.6
 import Sailfish.Silica 1.0

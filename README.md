@@ -1,89 +1,81 @@
 # sailfish-account-mastodon
 
-Sailfish OS account integration for Mastodon.
+`sailfish-account-mastodon` adds Mastodon integration to Sailfish OS. It lets
+you sign in with a Mastodon account, share to Mastodon from the system share
+sheet, and surface Mastodon activity in core Sailfish OS views.
 
-## Repository Components
+The goal is to make Mastodon feel like a built-in online account instead of a
+separate app silo. Once configured, the integration handles authentication,
+sharing, post sync, and notification sync through the standard Sailfish OS
+account and background sync framework.
 
-### `common/`
-- Shared C++ library code used by multiple plugins.
-- Includes socialcache-backed storage for Mastodon posts and shared Mastodon auth helpers.
+## What It Does
 
-### `settings/`
-- Sailfish Accounts provider, service definitions, and account UI.
-- OAuth2 (`web_server`) account flow with per-instance Mastodon app registration.
-- Translations:
-  - QML translation-loader module at `/usr/lib*/qt5/qml/com/jolla/settings/accounts/mastodon/` loads `settings-accounts-mastodon` catalogs for `qsTrId` strings.
-  - Engineering English catalog: `/usr/share/translations/settings-accounts-mastodon_eng_en.qm`
-  - Translation source catalog: `/usr/share/translations/source/settings-accounts-mastodon.ts`
-  - Provider/service metadata uses `<translations>/usr/share/translations/settings-accounts-mastodon</translations>` for metadata string translation paths.
-- Services:
-  - `mastodon-microblog`: sync service for posts and notifications.
-  - `mastodon-sharing`: Transfer Engine sharing service.
+- Adds a Mastodon account provider to Sailfish OS Accounts.
+- Supports sign-in against Mastodon servers with OAuth.
+- Registers an application on the selected server during setup.
+- Adds a Mastodon target to the Sailfish OS sharing flow.
+- Supports sharing photos, videos, links, and plain text posts.
+- Shows Mastodon posts in Events view.
+- Delivers Mastodon notifications through Sailfish OS system notifications.
+- Provides quick favourite and boost actions for posts shown in Events view.
 
-### `buteo-plugins/`
-- Buteo sync plugins and shared social sync framework code.
-- Includes:
-  - `buteo-sync-plugin-mastodon-posts`
-  - `buteo-sync-plugin-mastodon-notifications`
-- Installs Buteo client profile and sync profile XML files.
+## User Experience
 
-### `eventsview-plugins/`
-- Events view extension for Mastodon posts.
-- Includes delegate/feed item QML and `MastodonPostsModel`.
+After adding an account, Mastodon becomes available through the same system
+plumbing used by other Sailfish OS online services:
 
-### `transferengine-plugins/`
-- Transfer Engine integration for Mastodon sharing.
-- `mastodonshareplugin/`: sharing method discovery + metadata.
-- `mastodontransferplugin/`: media upload + status creation.
-- Single share UI entry: `MastodonSharePost.qml` handles both media and text/link posting.
-- Supports:
-  - media sharing (`image/jpeg`, `image/png`, `video/mp4`)
-  - link/text sharing (`text/x-url`, `text/plain`) with title/link extraction from share resources.
+- account setup and credential refresh happen through Sailfish Accounts
+- sharing uses Transfer Engine
+- background updates use Buteo sync plugins
+- posts appear in Events view
+- unread Mastodon notifications appear as Sailfish OS notifications
 
-### `icons/`
-- Mastodon SVG assets and `sailfish-svg2png` conversion setup.
-- Uses canonical icon names only:
-  - `icons/icon-l-mastodon`
-### `rpm/`
-- Packaging for all modules in `rpm/sailfish-account-mastodon.spec`.
-- Packages:
-  - `sailfish-account-mastodon` (all runtime components)
-  - `sailfish-account-mastodon-ts-devel` (translation source files only)
-- `%qmake5_install` already installs icon outputs from the `icons/` subproject; avoid a second explicit `icons` `make install` in `%install`.
-- Translation source `.ts` files are packaged in `sailfish-account-mastodon-ts-devel` (runtime package ships `.qm` only).
-- Runtime package ships the Mastodon settings translation-loader QML plugin under `%{_libdir}/qt5/qml/com/jolla/settings/accounts/mastodon/`.
+This project is intended for people who want Mastodon support that feels
+integrated with the rest of the operating system rather than bolted on top.
 
-### Root project
-- `sailfish-account-mastodon.pro` ties subprojects together.
+## Notes
 
-## Current Notification Behavior
+- Events view currently shows Mastodon posts, not Mastodon notification entries.
+- Notification sync tracks unread state using Mastodon markers and local sync
+  state.
+- The account UI asks for the server you want to use, so it is not limited to a
+  single Mastodon instance.
 
-- Events view shows Mastodon posts (not notification entries).
-- Events view post metadata line includes replies, favourites, and boosts alongside elapsed timestamp.
-- Long-pressing a Mastodon post reveals quick actions for favourite and boost, calling Mastodon API endpoints directly with account OAuth credentials.
-- System notifications are produced by `buteo-sync-plugin-mastodon-notifications`.
-- Notifications sync starts from Mastodon server marker (`notifications.last_read_id`) and uses local cursor dedupe via per-account `LastFetchedNotificationId`.
-- Each unread Mastodon notification is published as a separate Sailfish system notification.
-- Mastodon marker (`last_read_id`) is updated only when no local Mastodon notifications remain for that account.
-- Notification template profile dispatches per-account sync profiles on schedule (default every 30 minutes), not only at boot.
+## Licensing
 
-## Build Requirements
+This repository contains a mix of `BSD-3-Clause` and
+`LGPL-2.1-or-later` source files. REUSE metadata in the tree records the
+license for each file.
 
-This project targets Sailfish OS build tooling.
+The `LGPL-2.1-or-later` parts are the shared sync and cache layer:
 
-Full build/package validation is not possible without Sailfish SDK access (target sysroot + Sailfish packages).
+- `buteo-plugins/buteo-common/*`
+- `buteo-plugins/buteo-sync-plugin-mastodon-posts/*`
+- `buteo-plugins/buteo-sync-plugin-mastodon-notifications/*`
+- `common/mastodonpostsdatabase.*`
+- `eventsview-plugins/eventsview-plugin-mastodon/mastodonpostsmodel.*`
 
-Required SDK-provided dependencies include (not exhaustive):
-- `buteosyncfw5`
-- `socialcache`
-- `sailfishaccounts`
-- `nemotransferengine-qt5`
-- related Qt/account stack packages listed in `rpm/sailfish-account-mastodon.spec`
+These files are kept under LGPL because they are adapted from existing
+Sailfish OS social sync and social cache code, especially the public
+`buteo-sync-plugins-social` and `libsocialcache` codebases. The more
+Mastodon-specific helper, UI, and integration files are BSD-licensed unless
+noted otherwise.
 
-## Typical Build Flow (Inside Sailfish SDK)
+## Third-Party Marks
 
-1. Enter Sailfish SDK shell/target.
-2. Build from repository root (`qmake` / `make`).
-3. Build RPM package(s) from `rpm/sailfish-account-mastodon.spec`.
+Mastodon name and logos are trademarks of Mastodon gGmbH. The included
+Mastodon icon is used only to identify compatibility or integration with
+Mastodon. This project is not affiliated with or endorsed by Mastodon gGmbH.
 
-Outside Sailfish SDK, only static validation (wiring, paths, spec consistency) should be considered reliable.
+See:
+
+- `LICENSES/LicenseRef-Mastodon-Trademark-Policy.txt`
+- <https://joinmastodon.org/branding>
+- <https://joinmastodon.org/trademark>
+
+<!--
+SPDX-FileCopyrightText: 2026 Jolla Mobile Ltd
+
+SPDX-License-Identifier: BSD-3-Clause
+-->

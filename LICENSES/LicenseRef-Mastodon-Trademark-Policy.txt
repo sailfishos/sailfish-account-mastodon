@@ -1,0 +1,12 @@
+Mastodon name and logo usage for this repository is governed by Mastodon's
+branding and trademark policy, not by the project's BSD/LGPL source-code
+licenses.
+
+Official sources:
+- https://joinmastodon.org/branding
+- https://joinmastodon.org/trademark
+
+This repository uses the Mastodon icon only to identify Mastodon integration
+and compatibility. Mastodon name and logos are trademarks of Mastodon gGmbH.
+Their inclusion here does not imply affiliation with or endorsement by
+Mastodon gGmbH.
