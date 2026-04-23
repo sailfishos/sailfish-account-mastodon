@@ -8,10 +8,10 @@
 
 namespace {
 
-static const char *URL_KEY = "url";
-static const char *TYPE_KEY = "type";
-static const char *TYPE_PHOTO = "photo";
-static const char *TYPE_VIDEO = "video";
+const char *URL_KEY = "url";
+const char *TYPE_KEY = "type";
+const char *TYPE_PHOTO = "photo";
+const char *TYPE_VIDEO = "video";
 
 QVariantMap createImageData(const SocialPostImage::ConstPtr &image)
 {

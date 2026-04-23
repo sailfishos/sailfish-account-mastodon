@@ -25,7 +25,7 @@ BuildRequires: pkgconfig(socialcache)
 BuildRequires: pkgconfig(libsailfishkeyprovider)
 BuildRequires: pkgconfig(sailfishaccounts)
 BuildRequires: pkgconfig(nemotransferengine-qt5) >= 2.0.0
-BuildRequires:  pkgconfig(nemonotifications-qt5)
+BuildRequires: pkgconfig(nemonotifications-qt5)
 Requires: jolla-settings-accounts-extensions-onlinesync
 Requires: qmf-oauth2-plugin >= 0.0.7
 Requires: buteo-syncfw-qt5-msyncd

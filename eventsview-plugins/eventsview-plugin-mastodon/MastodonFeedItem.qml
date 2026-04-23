@@ -30,8 +30,8 @@ SocialMediaFeedItem {
     property bool isReblogged: _rebloggedOverride >= 0 ? _rebloggedOverride === 1 : reblogged
     readonly property bool housekeeping: Lipstick.compositor.eventsLayer.housekeeping
     readonly property bool lockScreenActive: Lipstick.compositor.lockScreenLayer.deviceIsLocked
-    property bool _pendingOpenActionMenu: false
-    property bool _contextMenuOpen: false
+    property bool _pendingOpenActionMenu
+    property bool _contextMenuOpen
     property var _actionMenu
     property real _contextMenuHeight: (_contextMenuOpen && _actionMenu) ? _actionMenu.height : 0
 

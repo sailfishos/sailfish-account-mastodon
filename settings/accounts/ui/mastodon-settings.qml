@@ -84,12 +84,14 @@ AccountSettingsAgent {
 
             PageHeader {
                 id: header
+
                 title: root.accountsHeaderText
                 description: root.accountSubtitle
             }
 
             MastodonSettingsDisplay {
                 id: settingsDisplay
+
                 anchors.top: header.bottom
                 accountManager: root.accountManager
                 accountProvider: root.accountProvider

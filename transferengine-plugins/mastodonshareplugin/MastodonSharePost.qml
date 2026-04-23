@@ -49,8 +49,6 @@ Item {
         id: postPreview
 
         SilicaFlickable {
-            id: postRoot
-
             width: parent.width
             height: contentHeight
             contentHeight: contentColumn.height
@@ -102,8 +100,6 @@ Item {
                 }
 
                 SystemDialogIconButton {
-                    id: postButton
-
                     anchors.horizontalCenter: parent.horizontalCenter
                     width: parent.width / 2
                     iconSource: "image://theme/icon-m-share"

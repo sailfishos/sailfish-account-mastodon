@@ -54,7 +54,7 @@ void MastodonShareServiceStatus::signIn(int accountId)
 
     SignOn::Identity *identity = account->credentialsId() > 0
             ? SignOn::Identity::existingIdentity(account->credentialsId())
-            : 0;
+            : nullptr;
     if (!identity) {
         qWarning() << Q_FUNC_INFO << "account" << accountId << "has no valid credentials";
         account->deleteLater();
