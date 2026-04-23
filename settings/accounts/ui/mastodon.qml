@@ -285,7 +285,7 @@ AccountCreationAgent {
                 label: qsTrId("settings-accounts-mastodon-la-server")
                 placeholderText: "mastodon.social"
                 inputMethodHints: Qt.ImhNoAutoUppercase | Qt.ImhUrlCharactersOnly
-                EnterKey.iconSource: "image://theme/icon-m-enter-next"
+                EnterKey.iconSource: "image://theme/icon-m-enter-accept"
                 EnterKey.onClicked: {
                     if (setupDialog.canAccept) {
                         setupDialog.accept()
