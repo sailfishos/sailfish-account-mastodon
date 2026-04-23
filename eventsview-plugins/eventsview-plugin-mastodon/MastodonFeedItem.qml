@@ -6,7 +6,6 @@
 import QtQuick 2.0
 import Sailfish.Silica 1.0
 import Sailfish.Share 1.0
-import Sailfish.TextLinking 1.0
 import org.nemomobile.lipstick 0.1
 import "shared"
 
@@ -145,7 +144,7 @@ SocialMediaFeedItem {
             textFormat: Text.PlainText
         }
 
-        LinkedText {
+        LinkedLabel {
             width: parent.width
             elide: Text.ElideRight
             wrapMode: Text.Wrap
