@@ -219,21 +219,21 @@ void MastodonPostsSyncAdaptor::finishedPostsHandler()
             }
 
             m_db.addMastodonPost(identifier,
-                                displayName,
-                                accountName,
-                                body,
-                                eventTimestamp,
-                                icon,
-                                imageList,
-                                url,
-                                boostedBy,
-                                repliesCount,
-                                favouritesCount,
-                                reblogsCount,
-                                favourited,
-                                reblogged,
-                                apiHost(accountId),
-                                accountId);
+                                 displayName,
+                                 accountName,
+                                 body,
+                                 eventTimestamp,
+                                 icon,
+                                 imageList,
+                                 url,
+                                 boostedBy,
+                                 repliesCount,
+                                 favouritesCount,
+                                 reblogsCount,
+                                 favourited,
+                                 reblogged,
+                                 apiHost(accountId),
+                                 accountId);
         }
     } else {
         qCWarning(lcMastodonPostsSync) << "unable to parse event feed data from request with account" << accountId

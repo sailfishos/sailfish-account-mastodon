@@ -265,6 +265,7 @@ SocialMediaFeedItem {
 
         SocialInteractionContextMenu {
             id: actionMenu
+
             z: 10000
             mapSourceItem: _contentColumn
             actionEnabled: item.postActions

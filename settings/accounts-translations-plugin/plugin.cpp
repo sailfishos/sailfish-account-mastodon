@@ -47,8 +47,8 @@ public:
     {
         Q_ASSERT(QLatin1String(uri) == QLatin1String("com.jolla.settings.accounts.mastodon"));
         qmlRegisterUncreatableType<MastodonAccountsTranslationsPlugin>(uri, 1, 0,
-                                                                        "MastodonTranslationPlugin",
-                                                                        QString());
+                                                                       "MastodonTranslationPlugin",
+                                                                       QString());
     }
 };
 

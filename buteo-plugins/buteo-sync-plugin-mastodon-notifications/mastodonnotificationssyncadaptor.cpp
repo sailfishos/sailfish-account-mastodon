@@ -723,7 +723,7 @@ void MastodonNotificationsSyncAdaptor::finishedNotificationsHandler()
         }
     } else {
         qCWarning(lcMastodonNotifications) << "unable to parse notifications data from request with account" << accountId
-                                  << ", got:" << QString::fromUtf8(replyData);
+                                           << ", got:" << QString::fromUtf8(replyData);
     }
 
     m_pendingSyncStates.remove(accountId);
@@ -755,7 +755,7 @@ void MastodonNotificationsSyncAdaptor::finishedMarkReadHandler()
         }
     } else {
         qCWarning(lcMastodonNotifications) << "unable to update notifications marker for account" << accountId
-                                  << ", got:" << QString::fromUtf8(replyData);
+                                           << ", got:" << QString::fromUtf8(replyData);
     }
 
     decrementSemaphore(accountId);
@@ -792,7 +792,7 @@ void MastodonNotificationsSyncAdaptor::publishSystemNotification(int accountId,
     notification->publish();
     if (notification->replacesId() == 0) {
         qCWarning(lcMastodonNotifications) << "failed to publish Mastodon notification"
-                                  << notificationData.notificationId;
+                                           << notificationData.notificationId;
     }
 }
 
@@ -924,7 +924,9 @@ Notification *MastodonNotificationsSyncAdaptor::createNotification(int accountId
     notification->setHintValue("x-nemo-priority", 100); // Show on lockscreen
     notification->setCategory(QLatin1String(NotificationCategory));
 
-    connect(notification, SIGNAL(closed(uint)), this, SLOT(notificationClosedWithReason(uint)), Qt::UniqueConnection);
+    connect(notification, &Notification::closed,
+            this, &MastodonNotificationsSyncAdaptor::notificationClosedWithReason,
+            Qt::UniqueConnection);
     m_notificationObjects.insert(objectKey, notification);
 
     return notification;
@@ -932,7 +934,7 @@ Notification *MastodonNotificationsSyncAdaptor::createNotification(int accountId
 
 Notification *MastodonNotificationsSyncAdaptor::findNotification(int accountId, const QString &notificationId)
 {
-    Notification *notification = 0;
+    Notification *notification = nullptr;
     QList<QObject *> notifications = Notification::notifications();
     foreach (QObject *object, notifications) {
         Notification *castedNotification = qobject_cast<Notification *>(object);

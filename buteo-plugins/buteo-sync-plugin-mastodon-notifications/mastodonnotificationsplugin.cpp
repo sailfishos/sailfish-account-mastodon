@@ -54,8 +54,8 @@ void ensureNotificationTranslations()
 }
 
 MastodonNotificationsPlugin::MastodonNotificationsPlugin(const QString& pluginName,
-                                         const Buteo::SyncProfile& profile,
-                                         Buteo::PluginCbInterface *callbackInterface)
+                                                         const Buteo::SyncProfile& profile,
+                                                         Buteo::PluginCbInterface *callbackInterface)
     : SocialdButeoPlugin(pluginName, profile, callbackInterface,
                          QStringLiteral("mastodon"),
                          SocialNetworkSyncAdaptor::dataTypeName(SocialNetworkSyncAdaptor::Notifications))

@@ -13,7 +13,8 @@ import "shared"
 
 SocialMediaAccountDelegate {
     id: delegateItem
-    property string instanceHomeUrl: ""
+
+    property string instanceHomeUrl
 
     //: Mastodon posts
     //% "Posts"
