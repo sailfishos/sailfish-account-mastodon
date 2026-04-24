@@ -91,6 +91,7 @@ AccountCreationAgent {
             }
 
             if (xhr.status < 200 || xhr.status >= 300) {
+                console.warn("Mastodon server error:", xhr.status, xhr.responseText)
                 //% "Failed to register Mastodon app for %1"
                 _showRegistrationError(qsTrId("settings-accounts-mastodon-la-register_app_failed").arg(apiHost), busyPage)
                 return
