@@ -22,7 +22,6 @@ BuildRequires: pkgconfig(accounts-qt5)
 BuildRequires: pkgconfig(libsignon-qt5)
 BuildRequires: pkgconfig(socialcache)
 BuildRequires: pkgconfig(buteosocialcommon)
-BuildRequires: pkgconfig(libsailfishkeyprovider)
 BuildRequires: pkgconfig(sailfishaccounts)
 BuildRequires: pkgconfig(nemotransferengine-qt5) >= 2.0.0
 BuildRequires: pkgconfig(nemonotifications-qt5)
