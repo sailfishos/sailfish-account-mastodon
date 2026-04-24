@@ -239,6 +239,7 @@ AccountCreationAgent {
 
         DialogHeader {
             id: header
+
             //% "Sign in"
             acceptText: qsTrId("settings-accounts-common-bt-sign_in")
         }
@@ -256,6 +257,7 @@ AccountCreationAgent {
 
                 Image {
                     id: promptIcon
+
                     width: Theme.iconSizeMedium
                     height: Theme.iconSizeMedium
                     source: "image://theme/icon-l-mastodon"
@@ -264,11 +266,11 @@ AccountCreationAgent {
                     sourceSize.height: height
                 }
 
-                //: Prompt shown in account setup before OAuth sign-in.
                 Label {
                     width: parent.width - promptIcon.width - parent.spacing
                     wrapMode: Text.Wrap
                     color: Theme.highlightColor
+                    //: Prompt shown in account setup before OAuth sign-in.
                     //% "Enter your Mastodon server, then sign in."
                     text: qsTrId("settings-accounts-mastodon-la-enter_server_then_sign_in")
                 }
@@ -276,13 +278,14 @@ AccountCreationAgent {
 
             TextField {
                 id: instanceField
+
                 x: Theme.horizontalPageMargin
                 width: parent.width - x * 2
                 //% "Server"
                 label: qsTrId("settings-accounts-mastodon-la-server")
                 placeholderText: "mastodon.social"
                 inputMethodHints: Qt.ImhNoAutoUppercase | Qt.ImhUrlCharactersOnly
-                EnterKey.iconSource: "image://theme/icon-m-enter-next"
+                EnterKey.iconSource: "image://theme/icon-m-enter-accept"
                 EnterKey.onClicked: {
                     if (setupDialog.canAccept) {
                         setupDialog.accept()
@@ -473,6 +476,7 @@ AccountCreationAgent {
 
                 MastodonSettingsDisplay {
                     id: settingsDisplay
+
                     anchors.top: header.bottom
                     accountManager: root.accountManager
                     accountProvider: root.accountProvider
@@ -487,5 +491,4 @@ AccountCreationAgent {
             }
         }
     }
-
 }

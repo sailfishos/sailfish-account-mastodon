@@ -6,7 +6,6 @@
 import QtQuick 2.0
 import Sailfish.Silica 1.0
 import Sailfish.Share 1.0
-import Sailfish.TextLinking 1.0
 import org.nemomobile.lipstick 0.1
 import "shared"
 
@@ -30,8 +29,8 @@ SocialMediaFeedItem {
     property bool isReblogged: _rebloggedOverride >= 0 ? _rebloggedOverride === 1 : reblogged
     readonly property bool housekeeping: Lipstick.compositor.eventsLayer.housekeeping
     readonly property bool lockScreenActive: Lipstick.compositor.lockScreenLayer.deviceIsLocked
-    property bool _pendingOpenActionMenu: false
-    property bool _contextMenuOpen: false
+    property bool _pendingOpenActionMenu
+    property bool _contextMenuOpen
     property var _actionMenu
     property real _contextMenuHeight: (_contextMenuOpen && _actionMenu) ? _actionMenu.height : 0
 
@@ -145,7 +144,7 @@ SocialMediaFeedItem {
             textFormat: Text.PlainText
         }
 
-        LinkedText {
+        LinkedLabel {
             width: parent.width
             elide: Text.ElideRight
             wrapMode: Text.Wrap

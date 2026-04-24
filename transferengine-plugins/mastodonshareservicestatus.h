@@ -29,11 +29,11 @@ class MastodonShareServiceStatus : public QObject
     Q_OBJECT
 
 public:
-    explicit MastodonShareServiceStatus(QObject *parent = 0);
+    explicit MastodonShareServiceStatus(QObject *parent = nullptr);
 
     enum QueryStatusMode {
-        PassiveMode = 0,
-        SignInMode = 1
+        PassiveMode,
+        SignInMode
     };
 
     void queryStatus(QueryStatusMode mode = SignInMode);

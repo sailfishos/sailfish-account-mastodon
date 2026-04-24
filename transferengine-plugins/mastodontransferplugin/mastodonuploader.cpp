@@ -17,8 +17,8 @@
 
 MastodonUploader::MastodonUploader(QNetworkAccessManager *qnam, QObject *parent)
     : MediaTransferInterface(parent)
-    , m_api(0)
-    , m_mastodonShareServiceStatus(0)
+    , m_api(nullptr)
+    , m_mastodonShareServiceStatus(nullptr)
     , m_qnam(qnam)
     , m_useTmpFile(false)
 {

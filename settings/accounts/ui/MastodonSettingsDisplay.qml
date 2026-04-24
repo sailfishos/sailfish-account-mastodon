@@ -7,13 +7,13 @@ import Sailfish.Silica 1.0
 import Sailfish.Accounts 1.0
 import com.jolla.settings.accounts 1.0
 import com.jolla.settings.accounts.mastodon 1.0
-import org.nemomobile.configuration 1.0
+import Nemo.Configuration 1.0
 
 StandardAccountSettingsDisplay {
     id: root
 
+    property bool postsServiceEnabled
     settingsModified: true
-    property bool postsServiceEnabled: false
 
     function refreshDescriptionEditor() {
         var description = root.account.configurationValues("")["description"]
@@ -39,8 +39,10 @@ StandardAccountSettingsDisplay {
         var providerDisplayName = root.accountProvider && root.accountProvider.displayName
                 ? root.accountProvider.displayName.toString().trim()
                 : ""
-        //% "Mastodon"
-        return providerDisplayName.length > 0 ? providerDisplayName : qsTrId("settings-accounts-mastodon-la-provider_name")
+
+        return providerDisplayName.length > 0 ? providerDisplayName
+                                              : //% "Mastodon"
+                                                qsTrId("settings-accounts-mastodon-la-provider_name")
     }
 
     onAboutToSaveAccount: {
@@ -78,6 +80,7 @@ StandardAccountSettingsDisplay {
 
     StandardAccountSettingsLoader {
         id: settingsLoader
+
         account: root.account
         accountProvider: root.accountProvider
         accountManager: root.accountManager
@@ -97,6 +100,7 @@ StandardAccountSettingsDisplay {
 
     Column {
         id: syncServicesDisplay
+
         width: parent.width
 
         SectionHeader {
@@ -107,21 +111,22 @@ StandardAccountSettingsDisplay {
 
         Repeater {
             id: syncServicesRepeater
+
             TextSwitch {
                 checked: model.enabled
                 text: model.serviceName === "mastodon-microblog"
-                        //% "Posts"
-                        ? qsTrId("settings-accounts-mastodon-la-service_posts")
+                        ? //% "Posts"
+                          qsTrId("settings-accounts-mastodon-la-service_posts")
                         : (model.serviceName === "mastodon-notifications"
-                           //% "Notifications"
-                           ? qsTrId("settings-accounts-mastodon-la-service_notifications")
+                           ? //% "Notifications"
+                             qsTrId("settings-accounts-mastodon-la-service_notifications")
                            : model.displayName)
                 description: model.serviceName === "mastodon-microblog"
-                        //% "Show Mastodon posts in the Events view."
-                        ? qsTrId("settings-accounts-mastodon-la-service_posts_description")
+                        ? //% "Show Mastodon posts in the Events view."
+                          qsTrId("settings-accounts-mastodon-la-service_posts_description")
                         : (model.serviceName === "mastodon-notifications"
-                           //% "Show Mastodon notifications."
-                           ? qsTrId("settings-accounts-mastodon-la-service_notifications_description")
+                           ? //% "Show Mastodon notifications."
+                             qsTrId("settings-accounts-mastodon-la-service_notifications_description")
                            : "")
                 visible: text.length > 0
                 onCheckedChanged: {
@@ -154,13 +159,14 @@ StandardAccountSettingsDisplay {
 
     ConfigurationValue {
         id: autoSyncConf
+
         key: "/desktop/lipstick-jolla-home/events/auto_sync_feeds/" + root.account.identifier
     }
 
     AccountServiceSettingsDisplay {
         id: otherServicesDisplay
-        enabled: root.accountEnabled
 
+        enabled: root.accountEnabled
         onUpdateServiceEnabledStatus: {
             if (enabled) {
                 root.account.enableWithService(serviceName)
