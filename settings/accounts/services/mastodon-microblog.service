@@ -4,7 +4,6 @@
 <!-- SPDX-License-Identifier: BSD-3-Clause -->
 <service id="mastodon-microblog">
     <type>microblogging</type>
-    <translations>/usr/share/translations/settings-accounts-mastodon</translations>
     <name>Posts</name>
     <icon>image://theme/icon-l-mastodon</icon>
     <provider>mastodon</provider>

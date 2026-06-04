@@ -4,7 +4,6 @@
 <!-- SPDX-License-Identifier: BSD-3-Clause -->
 <!DOCTYPE provider>
 <provider version="1.0" id="mastodon">
-    <translations>/usr/share/translations/settings-accounts-mastodon</translations>
     <name>Mastodon</name>
     <description>Mastodon social network</description>
     <icon>image://theme/icon-l-mastodon</icon>
