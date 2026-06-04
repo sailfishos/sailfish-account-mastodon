@@ -58,72 +58,45 @@ void MastodonPostsDatabase::addMastodonPost(
 
 QString MastodonPostsDatabase::accountName(const SocialPost::ConstPtr &post)
 {
-    if (post.isNull()) {
-        return QString();
-    }
-    return post->extra().value(ACCOUNT_NAME_KEY).toString();
+    return post.isNull() ? QString() : post->extraString(QString::fromLatin1(ACCOUNT_NAME_KEY));
 }
 
 QString MastodonPostsDatabase::url(const SocialPost::ConstPtr &post)
 {
-    if (post.isNull()) {
-        return QString();
-    }
-    return post->extra().value(URL_KEY).toString();
+    return post.isNull() ? QString() : post->extraString(QString::fromLatin1(URL_KEY));
 }
 
 QString MastodonPostsDatabase::boostedBy(const SocialPost::ConstPtr &post)
 {
-    if (post.isNull()) {
-        return QString();
-    }
-    return post->extra().value(BOOSTED_BY_KEY).toString();
+    return post.isNull() ? QString() : post->extraString(QString::fromLatin1(BOOSTED_BY_KEY));
 }
 
 int MastodonPostsDatabase::repliesCount(const SocialPost::ConstPtr &post)
 {
-    if (post.isNull()) {
-        return 0;
-    }
-    return post->extra().value(REPLIES_COUNT_KEY).toInt();
+    return post.isNull() ? 0 : post->extraInt(QString::fromLatin1(REPLIES_COUNT_KEY), 0);
 }
 
 int MastodonPostsDatabase::favouritesCount(const SocialPost::ConstPtr &post)
 {
-    if (post.isNull()) {
-        return 0;
-    }
-    return post->extra().value(FAVOURITES_COUNT_KEY).toInt();
+    return post.isNull() ? 0 : post->extraInt(QString::fromLatin1(FAVOURITES_COUNT_KEY), 0);
 }
 
 int MastodonPostsDatabase::reblogsCount(const SocialPost::ConstPtr &post)
 {
-    if (post.isNull()) {
-        return 0;
-    }
-    return post->extra().value(REBLOGS_COUNT_KEY).toInt();
+    return post.isNull() ? 0 : post->extraInt(QString::fromLatin1(REBLOGS_COUNT_KEY), 0);
 }
 
 bool MastodonPostsDatabase::favourited(const SocialPost::ConstPtr &post)
 {
-    if (post.isNull()) {
-        return false;
-    }
-    return post->extra().value(FAVOURITED_KEY).toBool();
+    return post.isNull() ? false : post->extraBool(QString::fromLatin1(FAVOURITED_KEY), false);
 }
 
 bool MastodonPostsDatabase::reblogged(const SocialPost::ConstPtr &post)
 {
-    if (post.isNull()) {
-        return false;
-    }
-    return post->extra().value(REBLOGGED_KEY).toBool();
+    return post.isNull() ? false : post->extraBool(QString::fromLatin1(REBLOGGED_KEY), false);
 }
 
 QString MastodonPostsDatabase::instanceUrl(const SocialPost::ConstPtr &post)
 {
-    if (post.isNull()) {
-        return QString();
-    }
-    return post->extra().value(INSTANCE_URL_KEY).toString();
+    return post.isNull() ? QString() : post->extraString(QString::fromLatin1(INSTANCE_URL_KEY));
 }

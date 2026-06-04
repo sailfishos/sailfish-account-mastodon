@@ -39,6 +39,8 @@ integrated with the rest of the operating system rather than bolted on top.
 - Events view currently shows Mastodon posts, not Mastodon notification entries.
 - Notification sync tracks unread state using Mastodon markers and local sync
   state.
+- Posts and notifications are synced through separate Sailfish OS account
+  services.
 - The account UI asks for the server you want to use, so it is not limited to a
   single Mastodon instance.
 
@@ -48,9 +50,9 @@ This repository contains a mix of `BSD-3-Clause` and
 `LGPL-2.1-or-later` source files. REUSE metadata in the tree records the
 license for each file.
 
-The `LGPL-2.1-or-later` parts are the shared sync and cache layer:
+The remaining `LGPL-2.1-or-later` files in this tree are the inherited sync
+and cache pieces:
 
-- `buteo-plugins/buteo-common/*`
 - `buteo-plugins/buteo-sync-plugin-mastodon-posts/*`
 - `buteo-plugins/buteo-sync-plugin-mastodon-notifications/*`
 - `common/mastodonpostsdatabase.*`
@@ -58,9 +60,10 @@ The `LGPL-2.1-or-later` parts are the shared sync and cache layer:
 
 These files are kept under LGPL because they are adapted from existing
 Sailfish OS social sync and social cache code, especially the public
-`buteo-sync-plugins-social` and `libsocialcache` codebases. The more
-Mastodon-specific helper, UI, and integration files are BSD-licensed unless
-noted otherwise.
+`buteo-sync-plugins-social` and `libsocialcache` codebases. The sync plugins
+link against the shared `buteosocialcommon` package rather than carrying an
+in-tree `buteo-common` build. The more Mastodon-specific helper, UI, and
+integration files are BSD-licensed unless noted otherwise.
 
 ## Third-Party Marks
 

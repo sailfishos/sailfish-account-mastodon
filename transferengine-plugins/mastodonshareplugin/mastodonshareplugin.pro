@@ -10,6 +10,8 @@ DEPENDPATH += .
 INCLUDEPATH += ..
 INCLUDEPATH += ../../common
 
+QT -= gui
+
 CONFIG += link_pkgconfig
 PKGCONFIG += nemotransferengine-qt5 accounts-qt5 sailfishaccounts libsignon-qt5
 

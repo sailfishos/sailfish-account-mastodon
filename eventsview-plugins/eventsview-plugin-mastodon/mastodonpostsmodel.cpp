@@ -4,30 +4,54 @@
 // SPDX-License-Identifier: LGPL-2.1-or-later
 
 #include "mastodonpostsmodel.h"
-#include <QtCore/QVariantMap>
 
 namespace {
-
-const char *URL_KEY = "url";
-const char *TYPE_KEY = "type";
-const char *TYPE_PHOTO = "photo";
-const char *TYPE_VIDEO = "video";
-
-QVariantMap createImageData(const SocialPostImage::ConstPtr &image)
+QVariantMap socialPostImageData(const SocialPostImage::ConstPtr &image)
 {
-    QVariantMap imageData;
-    imageData.insert(QLatin1String(URL_KEY), image->url());
-    switch (image->type()) {
-    case SocialPostImage::Video:
-        imageData.insert(QLatin1String(TYPE_KEY), QLatin1String(TYPE_VIDEO));
-        break;
-    default:
-        imageData.insert(QLatin1String(TYPE_KEY), QLatin1String(TYPE_PHOTO));
-        break;
+    QVariantMap data;
+    if (image.isNull()) {
+        return data;
     }
-    return imageData;
+
+    data.insert(QStringLiteral("url"), image->url());
+    data.insert(QStringLiteral("type"), image->type() == SocialPostImage::Video
+                ? QStringLiteral("video") : QStringLiteral("photo"));
+
+    return data;
 }
 
+QVariantList socialPostImageDataList(const QList<SocialPostImage::ConstPtr> &images)
+{
+    QVariantList list;
+    Q_FOREACH (const SocialPostImage::ConstPtr &image, images) {
+        list.append(socialPostImageData(image));
+    }
+    return list;
+}
+
+QVariantList socialPostAccountIdList(const QList<int> &accounts)
+{
+    QVariantList list;
+    Q_FOREACH (int account, accounts) {
+        list.append(account);
+    }
+    return list;
+}
+
+void appendCommonPostFields(QMap<int, QVariant> *rowData, const SocialPost::ConstPtr &post)
+{
+    if (!rowData || post.isNull()) {
+        return;
+    }
+
+    rowData->insert(MastodonPostsModel::MastodonId, post->identifier());
+    rowData->insert(MastodonPostsModel::Name, post->name());
+    rowData->insert(MastodonPostsModel::Body, post->body());
+    rowData->insert(MastodonPostsModel::Timestamp, post->timestamp());
+    rowData->insert(MastodonPostsModel::Icon, post->icon());
+    rowData->insert(MastodonPostsModel::Images, socialPostImageDataList(post->images()));
+    rowData->insert(MastodonPostsModel::Accounts, socialPostAccountIdList(post->accounts()));
+}
 }
 
 MastodonPostsModel::MastodonPostsModel(QObject *parent)
@@ -110,13 +134,9 @@ void MastodonPostsModel::postsChanged()
         const bool favourited = m_database.favourited(post);
         const bool reblogged = m_database.reblogged(post);
 
-        eventMap.insert(MastodonPostsModel::MastodonId, post->identifier());
-        eventMap.insert(MastodonPostsModel::Name, post->name());
+        appendCommonPostFields(&eventMap, post);
         eventMap.insert(MastodonPostsModel::AccountName, accountName);
         eventMap.insert(MastodonPostsModel::Acct, accountName);
-        eventMap.insert(MastodonPostsModel::Body, post->body());
-        eventMap.insert(MastodonPostsModel::Timestamp, post->timestamp());
-        eventMap.insert(MastodonPostsModel::Icon, post->icon());
         eventMap.insert(MastodonPostsModel::Url, postUrl);
         eventMap.insert(MastodonPostsModel::Link, postUrl);
         eventMap.insert(MastodonPostsModel::BoostedBy, boostedBy);
@@ -127,18 +147,6 @@ void MastodonPostsModel::postsChanged()
         eventMap.insert(MastodonPostsModel::Favourited, favourited);
         eventMap.insert(MastodonPostsModel::Reblogged, reblogged);
         eventMap.insert(MastodonPostsModel::InstanceUrl, m_database.instanceUrl(post));
-
-        QVariantList images;
-        Q_FOREACH (const SocialPostImage::ConstPtr &image, post->images()) {
-            images.append(createImageData(image));
-        }
-        eventMap.insert(MastodonPostsModel::Images, images);
-
-        QVariantList accountsVariant;
-        Q_FOREACH (int account, post->accounts()) {
-            accountsVariant.append(account);
-        }
-        eventMap.insert(MastodonPostsModel::Accounts, accountsVariant);
         data.append(eventMap);
     }
 
