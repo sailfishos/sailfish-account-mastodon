@@ -8,6 +8,7 @@ import Sailfish.Silica 1.0
 import org.nemomobile.socialcache 1.0
 import com.jolla.eventsview.mastodon 1.0
 import QtQml.Models 2.1
+import com.jolla.settings.accounts.mastodon 1.0 // translations
 import "shared"
 //import Sailfish.SocialFeed 1.0
 

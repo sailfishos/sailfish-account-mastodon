@@ -6,6 +6,7 @@ import QtQuick 2.6
 import Sailfish.Silica 1.0
 import Sailfish.Lipstick 1.0
 import Sailfish.TransferEngine 1.0
+import com.jolla.settings.accounts.mastodon 1.0 // translations
 
 Item {
     id: root

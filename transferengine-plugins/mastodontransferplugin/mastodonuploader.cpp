@@ -30,7 +30,8 @@ MastodonUploader::~MastodonUploader()
 
 QString MastodonUploader::displayName() const
 {
-    return tr("Mastodon");
+    // do we need translation for this?
+    return QLatin1String("Mastodon");
 }
 
 QUrl MastodonUploader::serviceIcon() const

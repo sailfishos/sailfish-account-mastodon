@@ -84,7 +84,6 @@ fi
 %{_datadir}/accounts/ui/mastodon-settings.qml
 %{_datadir}/accounts/ui/mastodon-update.qml
 %{_libdir}/qt5/qml/com/jolla/settings/accounts/mastodon/*
-%{_datadir}/translations/settings-accounts-mastodon_eng_en.qm
 %{_datadir}/themes/sailfish-default/silica/*/icons/icon-l-mastodon.png
 %{_libdir}/buteo-plugins-qt5/oopp/libmastodon-posts-client.so
 %config %{_sysconfdir}/buteo/profiles/client/mastodon-posts.xml
@@ -95,14 +94,11 @@ fi
 %{_libdir}/qt5/qml/com/jolla/eventsview/mastodon/*
 %{_datadir}/lipstick/eventfeed/mastodon-delegate.qml
 %{_datadir}/lipstick/eventfeed/MastodonFeedItem.qml
-%{_datadir}/translations/lipstick-jolla-home-mastodon_eng_en.qm
-%{_datadir}/translations/lipstick-jolla-home-mastodon-notifications_eng_en.qm
+%{_datadir}/translations/sailfish-account-mastodon_eng_en.qm
 
 %{_libdir}/nemo-transferengine/plugins/sharing/libmastodonshareplugin.so
 %{_libdir}/nemo-transferengine/plugins/transfer/libmastodontransferplugin.so
 %{_datadir}/nemo-transferengine/plugins/sharing/MastodonSharePost.qml
 
 %files -n sailfish-account-mastodon-ts-devel
-%{_datadir}/translations/source/settings-accounts-mastodon.ts
-%{_datadir}/translations/source/lipstick-jolla-home-mastodon.ts
-%{_datadir}/translations/source/lipstick-jolla-home-mastodon-notifications.ts
+%{_datadir}/translations/source/sailfish-account-mastodon.ts
