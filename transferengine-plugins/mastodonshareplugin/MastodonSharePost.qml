@@ -6,6 +6,7 @@ import QtQuick 2.6
 import Sailfish.Silica 1.0
 import Sailfish.Lipstick 1.0
 import Sailfish.TransferEngine 1.0
+import com.jolla.settings.accounts.mastodon 1.0 // translations
 
 Item {
     id: root
@@ -41,7 +42,8 @@ Item {
         ShareFilePreview {
             shareAction: root.shareAction
             metadataStripped: true
-            descriptionPlaceholderText: qsTr("Write a post")
+            //% "Write a post"
+            descriptionPlaceholderText: qsTrId("mastodon-share-la-write_post")
         }
     }
 
@@ -73,7 +75,7 @@ Item {
 
                     width: parent.width
                     //% "Link"
-                    label: qsTrId("sailfishshare-la-link")
+                    label: qsTrId("mastodon-share-la-link")
                     placeholderText: label
                     visible: sailfishTransfer.content.type === "text/x-url"
                     text: sailfishTransfer.content.data || sailfishTransfer.content.status || ""
@@ -84,7 +86,7 @@ Item {
 
                     width: parent.width
                     //% "Status update"
-                    label: qsTrId("sailfishshare-la-status_update")
+                    label: qsTrId("mastodon-share-la-status_update")
                     placeholderText: label
                     text: {
                         var title = sailfishTransfer.content.name || sailfishTransfer.content.linkTitle || ""
@@ -108,7 +110,7 @@ Item {
 
                     //: Post a social network account status update
                     //% "Post"
-                    text: qsTrId("sailfishshare-la-post_status")
+                    text: qsTrId("mastodon-share-la-post_status")
 
                     onClicked: {
                         var status = statusTextField.text || ""

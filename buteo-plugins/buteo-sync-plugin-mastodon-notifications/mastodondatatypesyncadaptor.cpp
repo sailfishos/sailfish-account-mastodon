@@ -82,9 +82,9 @@ void MastodonNotificationsDataTypeSyncAdaptor::errorHandler(QNetworkReply::Netwo
     const int httpStatus = reply->attribute(QNetworkRequest::HttpStatusCodeAttribute).toInt();
 
     qCWarning(lcMastodonNotificationsSync) << SocialNetworkSyncAdaptor::dataTypeName(m_dataType)
-                              << "request with account" << accountId
-                              << "experienced error:" << err
-                              << "HTTP:" << httpStatus;
+                                           << "request with account" << accountId
+                                           << "experienced error:" << err
+                                           << "HTTP:" << httpStatus;
 
     reply->setProperty("isError", QVariant::fromValue<bool>(true));
 
@@ -107,18 +107,21 @@ void MastodonNotificationsDataTypeSyncAdaptor::sslErrorsHandler(const QList<QSsl
     }
 
     qCWarning(lcMastodonNotificationsSync) << SocialNetworkSyncAdaptor::dataTypeName(m_dataType)
-                              << "request with account" << sender()->property("accountId").toInt()
-                              << "experienced ssl errors:" << sslerrs;
+                                           << "request with account" << sender()->property("accountId").toInt()
+                                           << "experienced ssl errors:" << sslerrs;
     sender()->setProperty("isError", QVariant::fromValue<bool>(true));
 }
 
 void MastodonNotificationsDataTypeSyncAdaptor::setCredentialsNeedUpdate(Accounts::Account *account)
 {
-    qCInfo(lcMastodonNotificationsSync) << "sociald:Mastodon: setting CredentialsNeedUpdate to true for account:" << account->id();
+    qCInfo(lcMastodonNotificationsSync) << "sociald:Mastodon: setting CredentialsNeedUpdate to true for account:"
+                                        << account->id();
     Accounts::Service srv(m_accountManager->service(authServiceName()));
     account->selectService(srv);
-    account->setValue(QStringLiteral("CredentialsNeedUpdate"), QVariant::fromValue<bool>(true));
-    account->setValue(QStringLiteral("CredentialsNeedUpdateFrom"), QVariant::fromValue<QString>(QString::fromLatin1("sociald-mastodon")));
+    account->setValue(QStringLiteral("CredentialsNeedUpdate"),
+                      QVariant::fromValue<bool>(true));
+    account->setValue(QStringLiteral("CredentialsNeedUpdateFrom"),
+                      QVariant::fromValue<QString>(QString::fromLatin1("sociald-mastodon")));
     account->selectService(Accounts::Service());
     account->syncAndBlock();
 }
@@ -136,7 +139,7 @@ void MastodonNotificationsDataTypeSyncAdaptor::signIn(Accounts::Account *account
 
     SignOn::Identity *identity = account->credentialsId() > 0
             ? SignOn::Identity::existingIdentity(account->credentialsId())
-            : 0;
+            : nullptr;
     if (!identity) {
         qCWarning(lcMastodonNotificationsSync) << "account" << accountId << "has no valid credentials, cannot sign in";
         decrementSemaphore(accountId);
@@ -177,7 +180,7 @@ void MastodonNotificationsDataTypeSyncAdaptor::signOnError(const SignOn::Error &
     const int accountId = account->id();
 
     qCWarning(lcMastodonNotificationsSync) << "credentials for account with id" << accountId
-                              << "couldn't be retrieved:" << error.type() << error.message();
+                                           << "couldn't be retrieved:" << error.type() << error.message();
 
     if (error.type() == SignOn::Error::UserInteraction) {
         setCredentialsNeedUpdate(account);
@@ -205,7 +208,7 @@ void MastodonNotificationsDataTypeSyncAdaptor::signOnResponse(const SignOn::Sess
     accessToken = MastodonAuthUtils::accessToken(data);
     if (accessToken.isEmpty()) {
         qCWarning(lcMastodonNotificationsSync) << "signon response for account with id" << accountId
-                                  << "contained no access token; keys:" << data.keys();
+                                               << "contained no access token; keys:" << data.keys();
     }
 
     m_apiHosts.insert(accountId, MastodonAuthUtils::normalizeApiHost(account->value(QStringLiteral("api/Host")).toString()));

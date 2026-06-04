@@ -37,18 +37,18 @@ public:
         Q_UNUSED(uri)
 
         AppTranslator *engineeringEnglish = new AppTranslator(engine);
-        engineeringEnglish->load("settings-accounts-mastodon_eng_en", "/usr/share/translations");
+        engineeringEnglish->load("sailfish-account-mastodon_eng_en", "/usr/share/translations");
 
         AppTranslator *translator = new AppTranslator(engine);
-        translator->load(QLocale(), "settings-accounts-mastodon", "-", "/usr/share/translations");
+        translator->load(QLocale(), "sailfish-account-mastodon", "-", "/usr/share/translations");
     }
 
     void registerTypes(const char *uri) override
     {
         Q_ASSERT(QLatin1String(uri) == QLatin1String("com.jolla.settings.accounts.mastodon"));
         qmlRegisterUncreatableType<MastodonAccountsTranslationsPlugin>(uri, 1, 0,
-                                                                        "MastodonTranslationPlugin",
-                                                                        QString());
+                                                                       "MastodonTranslationPlugin",
+                                                                       QString());
     }
 };
 

@@ -112,8 +112,10 @@ void MastodonDataTypeSyncAdaptor::setCredentialsNeedUpdate(Accounts::Account *ac
     qCInfo(lcMastodonSync) << "sociald:Mastodon: setting CredentialsNeedUpdate to true for account:" << account->id();
     Accounts::Service srv(m_accountManager->service(syncServiceName()));
     account->selectService(srv);
-    account->setValue(QStringLiteral("CredentialsNeedUpdate"), QVariant::fromValue<bool>(true));
-    account->setValue(QStringLiteral("CredentialsNeedUpdateFrom"), QVariant::fromValue<QString>(QString::fromLatin1("sociald-mastodon")));
+    account->setValue(QStringLiteral("CredentialsNeedUpdate"),
+                      QVariant::fromValue<bool>(true));
+    account->setValue(QStringLiteral("CredentialsNeedUpdateFrom"),
+                      QVariant::fromValue<QString>(QString::fromLatin1("sociald-mastodon")));
     account->selectService(Accounts::Service());
     account->syncAndBlock();
 }
@@ -130,7 +132,8 @@ void MastodonDataTypeSyncAdaptor::signIn(Accounts::Account *account)
     account->selectService(srv);
     SignOn::Identity *identity = account->credentialsId() > 0
             ? SignOn::Identity::existingIdentity(account->credentialsId())
-            : 0;
+            : nullptr;
+
     if (!identity) {
         qCWarning(lcMastodonSync) << "account" << accountId << "has no valid credentials, cannot sign in";
         decrementSemaphore(accountId);

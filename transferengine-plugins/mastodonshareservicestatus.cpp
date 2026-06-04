@@ -216,9 +216,9 @@ void MastodonShareServiceStatus::queryStatus(QueryStatusMode mode)
             continue;
         }
 
-        const bool accountEnabled = acc->enabled();
+        const bool accountEnabled = acc->isEnabled();
         acc->selectService(service);
-        const bool shareServiceEnabled = acc->enabled();
+        const bool shareServiceEnabled = acc->isEnabled();
         if (!accountEnabled || !shareServiceEnabled) {
             acc->selectService(Accounts::Service());
             acc->deleteLater();

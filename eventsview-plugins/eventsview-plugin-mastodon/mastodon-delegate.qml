@@ -8,16 +8,18 @@ import Sailfish.Silica 1.0
 import org.nemomobile.socialcache 1.0
 import com.jolla.eventsview.mastodon 1.0
 import QtQml.Models 2.1
+import com.jolla.settings.accounts.mastodon 1.0 // translations
 import "shared"
 //import Sailfish.SocialFeed 1.0
 
 SocialMediaAccountDelegate {
     id: delegateItem
-    property string instanceHomeUrl: ""
+
+    property string instanceHomeUrl
 
     //: Mastodon posts
     //% "Posts"
-    headerText: qsTrId("lipstick-jolla-home-la-mastodon_posts")
+    headerText: qsTrId("mastodon-feeditem-la-mastodon_posts")
     headerIcon: "image://theme/icon-l-mastodon"
     showRemainingCount: false
 
@@ -57,7 +59,7 @@ SocialMediaAccountDelegate {
         }
     }
     //% "Show more in Mastodon"
-    expandedLabel: qsTrId("lipstick-jolla-home-la-show-more-in-mastodon")
+    expandedLabel: qsTrId("mastodon-feeditem-la-show-more-in-mastodon")
 
     onHeaderClicked: {
         if (delegateItem.instanceHomeUrl.length > 0) {

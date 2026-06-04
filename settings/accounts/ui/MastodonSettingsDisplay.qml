@@ -99,8 +99,6 @@ StandardAccountSettingsDisplay {
     }
 
     Column {
-        id: syncServicesDisplay
-
         width: parent.width
 
         SectionHeader {

@@ -40,12 +40,12 @@ void ensureNotificationTranslations()
     }
 
     AppTranslator *engineeringEnglish = new AppTranslator(app);
-    engineeringEnglish->load(QStringLiteral("lipstick-jolla-home-mastodon-notifications_eng_en"),
+    engineeringEnglish->load(QStringLiteral("sailfish-account-mastodon_eng_en"),
                              QStringLiteral("/usr/share/translations"));
 
     AppTranslator *translator = new AppTranslator(app);
     translator->load(QLocale(),
-                     QStringLiteral("lipstick-jolla-home-mastodon-notifications"),
+                     QStringLiteral("sailfish-account-mastodon"),
                      QStringLiteral("-"),
                      QStringLiteral("/usr/share/translations"));
 
@@ -54,8 +54,8 @@ void ensureNotificationTranslations()
 }
 
 MastodonNotificationsPlugin::MastodonNotificationsPlugin(const QString& pluginName,
-                                         const Buteo::SyncProfile& profile,
-                                         Buteo::PluginCbInterface *callbackInterface)
+                                                         const Buteo::SyncProfile& profile,
+                                                         Buteo::PluginCbInterface *callbackInterface)
     : SocialdButeoPlugin(pluginName, profile, callbackInterface,
                          QStringLiteral("mastodon"),
                          SocialNetworkSyncAdaptor::dataTypeName(SocialNetworkSyncAdaptor::Notifications))
