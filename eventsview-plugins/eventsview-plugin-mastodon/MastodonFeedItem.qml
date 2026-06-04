@@ -41,22 +41,22 @@ SocialMediaFeedItem {
     property string _bodyText: model && model.body ? model.body.toString() : ""
     //: Action label shown in Mastodon interaction menu.
     //% "Favourite"
-    readonly property string _favouriteActionText: qsTrId("lipstick-jolla-home-la-mastodon_favourite")
+    readonly property string _favouriteActionText: qsTrId("mastodon-feeditem-la_favourite")
     //: Action label shown in Mastodon interaction menu when the post is already favourited.
     //% "Unfavourite"
-    readonly property string _unfavouriteActionText: qsTrId("lipstick-jolla-home-la-mastodon_unfavourite")
+    readonly property string _unfavouriteActionText: qsTrId("mastodon-feeditem-la_unfavourite")
     //: Action label shown in Mastodon interaction menu.
     //% "Boost"
-    readonly property string _boostActionText: qsTrId("lipstick-jolla-home-la-mastodon_boost")
+    readonly property string _boostActionText: qsTrId("mastodon-feeditem-la_boost")
     //: Action label shown in Mastodon interaction menu when the post is already boosted.
     //% "Undo boost"
-    readonly property string _unboostActionText: qsTrId("lipstick-jolla-home-la-mastodon_unboost")
+    readonly property string _unboostActionText: qsTrId("mastodon-feeditem-la_unboost")
     //: Action label shown in Mastodon interaction menu.
     //% "Share"
-    readonly property string _shareActionText: qsTrId("lipstick-jolla-home-la-mastodon_share")
+    readonly property string _shareActionText: qsTrId("mastodon-feeditem-la_share")
     //: Link title used when sharing a Mastodon post.
     //% "Post from Mastodon"
-    readonly property string _shareLinkTitle: qsTrId("lipstick-jolla-home-la-mastodon_share_link_title")
+    readonly property string _shareLinkTitle: qsTrId("mastodon-feeditem-la_share_link_title")
     property var _shareAction: ShareAction {
         title: item._shareActionText
     }
@@ -120,7 +120,7 @@ SocialMediaFeedItem {
         text: item._booster.length > 0
               ? //: Shown above a post that is boosted by another user. %1 = name of user who boosted
                 //% "%1 boosted"
-                qsTrId("lipstick-jolla-home-la-boosted_by").arg(item._booster)
+                qsTrId("mastodon-feeditem-la-boosted_by").arg(item._booster)
               : ""
     }
 

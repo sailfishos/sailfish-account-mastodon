@@ -18,7 +18,7 @@ SocialMediaAccountDelegate {
 
     //: Mastodon posts
     //% "Posts"
-    headerText: qsTrId("lipstick-jolla-home-la-mastodon_posts")
+    headerText: qsTrId("mastodon-feeditem-la-mastodon_posts")
     headerIcon: "image://theme/icon-l-mastodon"
     showRemainingCount: false
 
@@ -58,7 +58,7 @@ SocialMediaAccountDelegate {
         }
     }
     //% "Show more in Mastodon"
-    expandedLabel: qsTrId("lipstick-jolla-home-la-show-more-in-mastodon")
+    expandedLabel: qsTrId("mastodon-feeditem-la-show-more-in-mastodon")
 
     onHeaderClicked: {
         if (delegateItem.instanceHomeUrl.length > 0) {

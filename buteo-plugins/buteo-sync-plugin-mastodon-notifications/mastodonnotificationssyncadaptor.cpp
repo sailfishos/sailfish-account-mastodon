@@ -45,70 +45,70 @@ namespace {
     const uint NotificationDismissedReason = 1;
 
     //% "mentioned you"
-    const char *const TrIdMentionedYou = QT_TRID_NOOP("lipstick-jolla-home-la-mastodon-notification-mentioned_you");
+    const char *const TrIdMentionedYou = QT_TRID_NOOP("sailfish-account-mastodon-notification-mentioned_you");
     //% "boosted your post"
-    const char *const TrIdBoostedYourPost = QT_TRID_NOOP("lipstick-jolla-home-la-mastodon-notification-boosted_your_post");
+    const char *const TrIdBoostedYourPost = QT_TRID_NOOP("sailfish-account-mastodon-notification-boosted_your_post");
     //% "favourited your post"
-    const char *const TrIdFavouritedYourPost = QT_TRID_NOOP("lipstick-jolla-home-la-mastodon-notification-favourited_your_post");
+    const char *const TrIdFavouritedYourPost = QT_TRID_NOOP("sailfish-account-mastodon-notification-favourited_your_post");
     //% "started following you"
-    const char *const TrIdStartedFollowingYou = QT_TRID_NOOP("lipstick-jolla-home-la-mastodon-notification-started_following_you");
+    const char *const TrIdStartedFollowingYou = QT_TRID_NOOP("sailfish-account-mastodon-notification-started_following_you");
     //% "requested to follow you"
-    const char *const TrIdRequestedToFollowYou = QT_TRID_NOOP("lipstick-jolla-home-la-mastodon-notification-requested_to_follow_you");
+    const char *const TrIdRequestedToFollowYou = QT_TRID_NOOP("sailfish-account-mastodon-notification-requested_to_follow_you");
     //% "interacted with your poll"
-    const char *const TrIdInteractedWithYourPoll = QT_TRID_NOOP("lipstick-jolla-home-la-mastodon-notification-interacted_with_your_poll");
+    const char *const TrIdInteractedWithYourPoll = QT_TRID_NOOP("sailfish-account-mastodon-notification-interacted_with_your_poll");
     //% "posted"
-    const char *const TrIdPosted = QT_TRID_NOOP("lipstick-jolla-home-la-mastodon-notification-posted");
+    const char *const TrIdPosted = QT_TRID_NOOP("sailfish-account-mastodon-notification-posted");
     //% "updated a post"
-    const char *const TrIdUpdatedPost = QT_TRID_NOOP("lipstick-jolla-home-la-mastodon-notification-updated_post");
+    const char *const TrIdUpdatedPost = QT_TRID_NOOP("sailfish-account-mastodon-notification-updated_post");
     //% "signed up"
-    const char *const TrIdSignedUp = QT_TRID_NOOP("lipstick-jolla-home-la-mastodon-notification-signed_up");
+    const char *const TrIdSignedUp = QT_TRID_NOOP("sailfish-account-mastodon-notification-signed_up");
     //% "reported an account"
-    const char *const TrIdReportedAccount = QT_TRID_NOOP("lipstick-jolla-home-la-mastodon-notification-reported_account");
+    const char *const TrIdReportedAccount = QT_TRID_NOOP("sailfish-account-mastodon-notification-reported_account");
     //% "received a moderation warning"
-    const char *const TrIdReceivedModerationWarning = QT_TRID_NOOP("lipstick-jolla-home-la-mastodon-notification-received_moderation_warning");
+    const char *const TrIdReceivedModerationWarning = QT_TRID_NOOP("sailfish-account-mastodon-notification-received_moderation_warning");
     //% "quoted your post"
-    const char *const TrIdQuotedYourPost = QT_TRID_NOOP("lipstick-jolla-home-la-mastodon-notification-quoted_your_post");
+    const char *const TrIdQuotedYourPost = QT_TRID_NOOP("sailfish-account-mastodon-notification-quoted_your_post");
     //% "updated a post that quoted you"
-    const char *const TrIdUpdatedQuotedPost = QT_TRID_NOOP("lipstick-jolla-home-la-mastodon-notification-updated_quoted_post");
+    const char *const TrIdUpdatedQuotedPost = QT_TRID_NOOP("sailfish-account-mastodon-notification-updated_quoted_post");
     //% "sent you a notification"
-    const char *const TrIdSentNotification = QT_TRID_NOOP("lipstick-jolla-home-la-mastodon-notification-sent_notification");
+    const char *const TrIdSentNotification = QT_TRID_NOOP("sailfish-account-mastodon-notification-sent_notification");
 
     //% "An admin blocked an instance"
-    const char *const TrIdAdminBlockedInstance = QT_TRID_NOOP("lipstick-jolla-home-la-mastodon-notification-admin_blocked_instance");
+    const char *const TrIdAdminBlockedInstance = QT_TRID_NOOP("sailfish-account-mastodon-notification-admin_blocked_instance");
     //% "An admin blocked %1"
-    const char *const TrIdAdminBlockedTarget = QT_TRID_NOOP("lipstick-jolla-home-la-mastodon-notification-admin_blocked_target");
+    const char *const TrIdAdminBlockedTarget = QT_TRID_NOOP("sailfish-account-mastodon-notification-admin_blocked_target");
     //% "You blocked an instance"
-    const char *const TrIdYouBlockedInstance = QT_TRID_NOOP("lipstick-jolla-home-la-mastodon-notification-you_blocked_instance");
+    const char *const TrIdYouBlockedInstance = QT_TRID_NOOP("sailfish-account-mastodon-notification-you_blocked_instance");
     //% "You blocked %1"
-    const char *const TrIdYouBlockedTarget = QT_TRID_NOOP("lipstick-jolla-home-la-mastodon-notification-you_blocked_target");
+    const char *const TrIdYouBlockedTarget = QT_TRID_NOOP("sailfish-account-mastodon-notification-you_blocked_target");
     //% "An account was suspended"
-    const char *const TrIdAccountSuspended = QT_TRID_NOOP("lipstick-jolla-home-la-mastodon-notification-account_suspended");
+    const char *const TrIdAccountSuspended = QT_TRID_NOOP("sailfish-account-mastodon-notification-account_suspended");
     //% "%1 was suspended"
-    const char *const TrIdTargetSuspended = QT_TRID_NOOP("lipstick-jolla-home-la-mastodon-notification-target_suspended");
+    const char *const TrIdTargetSuspended = QT_TRID_NOOP("sailfish-account-mastodon-notification-target_suspended");
     //% "Some follow relationships were severed"
-    const char *const TrIdRelationshipsSevered = QT_TRID_NOOP("lipstick-jolla-home-la-mastodon-notification-relationships_severed");
+    const char *const TrIdRelationshipsSevered = QT_TRID_NOOP("sailfish-account-mastodon-notification-relationships_severed");
     //% "%1 (%2 followers, %3 following removed)"
-    const char *const TrIdRelationshipsSummary = QT_TRID_NOOP("lipstick-jolla-home-la-mastodon-notification-relationships_summary");
+    const char *const TrIdRelationshipsSummary = QT_TRID_NOOP("sailfish-account-mastodon-notification-relationships_summary");
 
     //% "A moderator sent you a warning"
-    const char *const TrIdModeratorWarningNone = QT_TRID_NOOP("lipstick-jolla-home-la-mastodon-notification-moderator_warning_none");
+    const char *const TrIdModeratorWarningNone = QT_TRID_NOOP("sailfish-account-mastodon-notification-moderator_warning_none");
     //% "A moderator disabled your account"
-    const char *const TrIdModeratorWarningDisable = QT_TRID_NOOP("lipstick-jolla-home-la-mastodon-notification-moderator_warning_disable");
+    const char *const TrIdModeratorWarningDisable = QT_TRID_NOOP("sailfish-account-mastodon-notification-moderator_warning_disable");
     //% "A moderator marked specific posts as sensitive"
-    const char *const TrIdModeratorWarningSpecificSensitive = QT_TRID_NOOP("lipstick-jolla-home-la-mastodon-notification-moderator_warning_specific_sensitive");
+    const char *const TrIdModeratorWarningSpecificSensitive = QT_TRID_NOOP("sailfish-account-mastodon-notification-moderator_warning_specific_sensitive");
     //% "A moderator deleted specific posts"
-    const char *const TrIdModeratorWarningDeletePosts = QT_TRID_NOOP("lipstick-jolla-home-la-mastodon-notification-moderator_warning_delete_posts");
+    const char *const TrIdModeratorWarningDeletePosts = QT_TRID_NOOP("sailfish-account-mastodon-notification-moderator_warning_delete_posts");
     //% "A moderator marked all your posts as sensitive"
-    const char *const TrIdModeratorWarningAllSensitive = QT_TRID_NOOP("lipstick-jolla-home-la-mastodon-notification-moderator_warning_all_sensitive");
+    const char *const TrIdModeratorWarningAllSensitive = QT_TRID_NOOP("sailfish-account-mastodon-notification-moderator_warning_all_sensitive");
     //% "A moderator limited your account"
-    const char *const TrIdModeratorWarningSilence = QT_TRID_NOOP("lipstick-jolla-home-la-mastodon-notification-moderator_warning_silence");
+    const char *const TrIdModeratorWarningSilence = QT_TRID_NOOP("sailfish-account-mastodon-notification-moderator_warning_silence");
     //% "A moderator suspended your account"
-    const char *const TrIdModeratorWarningSuspend = QT_TRID_NOOP("lipstick-jolla-home-la-mastodon-notification-moderator_warning_suspend");
+    const char *const TrIdModeratorWarningSuspend = QT_TRID_NOOP("sailfish-account-mastodon-notification-moderator_warning_suspend");
 
     //% "Mastodon"
-    const char *const TrIdMastodon = QT_TRID_NOOP("lipstick-jolla-home-la-mastodon-notification-mastodon");
+    const char *const TrIdMastodon = QT_TRID_NOOP("sailfish-account-mastodon-notification-mastodon");
     //% "New notification"
-    const char *const TrIdNewNotification = QT_TRID_NOOP("lipstick-jolla-home-la-mastodon-notification-new_notification");
+    const char *const TrIdNewNotification = QT_TRID_NOOP("sailfish-account-mastodon-notification-new_notification");
 
     QString displayNameForAccount(const QJsonObject &account)
     {
