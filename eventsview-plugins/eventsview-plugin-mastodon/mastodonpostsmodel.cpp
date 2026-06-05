@@ -123,6 +123,7 @@ void MastodonPostsModel::postsChanged()
 {
     QList<RowData> data;
     QList<SocialPost::ConstPtr> postsData = m_database.posts();
+
     Q_FOREACH (const SocialPost::ConstPtr &post, postsData) {
         RowData eventMap;
         const QString accountName = m_database.accountName(post);
@@ -148,6 +149,11 @@ void MastodonPostsModel::postsChanged()
         eventMap.insert(MastodonPostsModel::Reblogged, reblogged);
         eventMap.insert(MastodonPostsModel::InstanceUrl, m_database.instanceUrl(post));
         data.append(eventMap);
+    }
+
+    // at least avoid unnecessary model resets. TODO: more fine-grained update to the content
+    if (m_data == data) {
+        return;
     }
 
     const int oldCount = m_data.count();
