@@ -275,7 +275,7 @@ AccountCreationAgent {
                     wrapMode: Text.Wrap
                     color: Theme.highlightColor
                     //: Prompt shown in account setup before OAuth sign-in.
-                    //% "Enter your Mastodon server, then sign in."
+                    //% "Enter your Mastodon server or leave empty for default service."
                     text: qsTrId("settings-accounts-mastodon-la-enter_server_then_sign_in")
                 }
             }
