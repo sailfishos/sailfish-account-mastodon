@@ -88,6 +88,7 @@ void MastodonUploader::startUploading()
 
     const quint32 accountId = mediaItem()->value(MediaItem::AccountId).toInt();
     m_accountDetails = m_mastodonShareServiceStatus->detailsByIdentifier(accountId);
+
     if (m_accountDetails.accountId <= 0 || m_accountDetails.accessToken.isEmpty()) {
         qWarning() << Q_FUNC_INFO << "Mastodon account details missing for id" << accountId;
         transferError();
