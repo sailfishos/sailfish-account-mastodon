@@ -88,7 +88,6 @@ StandardAccountSettingsDisplay {
 
         onSettingsLoaded: {
             syncServicesRepeater.model = syncServices
-            otherServicesDisplay.serviceModel = otherServices
 
             refreshDescriptionEditor()
 
@@ -100,12 +99,6 @@ StandardAccountSettingsDisplay {
 
     Column {
         width: parent.width
-
-        SectionHeader {
-            //: Options for data to be downloaded from a remote server
-            //% "Download"
-            text: qsTrId("settings-accounts-la-download_options")
-        }
 
         Repeater {
             id: syncServicesRepeater
@@ -159,18 +152,5 @@ StandardAccountSettingsDisplay {
         id: autoSyncConf
 
         key: "/desktop/lipstick-jolla-home/events/auto_sync_feeds/" + root.account.identifier
-    }
-
-    AccountServiceSettingsDisplay {
-        id: otherServicesDisplay
-
-        enabled: root.accountEnabled
-        onUpdateServiceEnabledStatus: {
-            if (enabled) {
-                root.account.enableWithService(serviceName)
-            } else {
-                root.account.disableWithService(serviceName)
-            }
-        }
     }
 }
