@@ -93,7 +93,8 @@ AccountCreationAgent {
             if (xhr.status < 200 || xhr.status >= 300) {
                 console.warn("Mastodon server error:", xhr.status, xhr.responseText)
                 //% "Failed to register Mastodon app for %1"
-                _showRegistrationError(qsTrId("settings-accounts-mastodon-la-register_app_failed").arg(apiHost), busyPage)
+                _showRegistrationError(qsTrId("settings-accounts-mastodon-la-register_app_failed").arg(apiHost),
+                                       busyPage)
                 return
             }
 
@@ -102,13 +103,15 @@ AccountCreationAgent {
                 response = JSON.parse(xhr.responseText)
             } catch (err) {
                 //% "Invalid Mastodon app registration response"
-                _showRegistrationError(qsTrId("settings-accounts-mastodon-la-invalid_app_registration_response"), busyPage)
+                _showRegistrationError(qsTrId("settings-accounts-mastodon-la-invalid_app_registration_response"),
+                                       busyPage)
                 return
             }
 
             if (!response.client_id || !response.client_secret) {
                 //% "Mastodon app registration did not return credentials"
-                _showRegistrationError(qsTrId("settings-accounts-mastodon-la-app_registration_missing_credentials"), busyPage)
+                _showRegistrationError(qsTrId("settings-accounts-mastodon-la-app_registration_missing_credentials"),
+                                       busyPage)
                 return
             }
 
@@ -272,7 +275,7 @@ AccountCreationAgent {
                     wrapMode: Text.Wrap
                     color: Theme.highlightColor
                     //: Prompt shown in account setup before OAuth sign-in.
-                    //% "Enter your Mastodon server, then sign in."
+                    //% "Enter your Mastodon server or leave empty for default service."
                     text: qsTrId("settings-accounts-mastodon-la-enter_server_then_sign_in")
                 }
             }
@@ -374,7 +377,6 @@ AccountCreationAgent {
             function configure() {
                 hasConfigured = true
 
-                var services = ["mastodon-microblog", "mastodon-notifications", "mastodon-sharing"]
                 var providerDisplayName = root.accountProvider && root.accountProvider.displayName
                         ? root.accountProvider.displayName.toString().trim()
                         : ""
@@ -398,7 +400,10 @@ AccountCreationAgent {
                     }
                 }
 
-                for (var i = 0; i < services.length; ++i) {
+                var services = ["mastodon-microblog", "mastodon-notifications", "mastodon-sharing"]
+                var i
+
+                for (i = 0; i < services.length; ++i) {
                     var service = services[i]
                     newAccount.setConfigurationValue(service, "api/Host", apiHost)
                     newAccount.setConfigurationValue(service, "auth/oauth2/web_server/Host", oauthHost)
@@ -411,8 +416,8 @@ AccountCreationAgent {
                     newAccount.setConfigurationValue(service, "auth/oauth2/web_server/ClientSecret", clientSecret)
                 }
 
-                for (var j = 0; j < services.length; ++j) {
-                    newAccount.enableWithService(services[j])
+                for (i = 0; i < services.length; ++i) {
+                    newAccount.enableWithService(services[i])
                 }
 
                 if (accountDescription.length > 0 || accessToken.length === 0) {
@@ -429,12 +434,15 @@ AccountCreationAgent {
                     if (xhr.status >= 200 && xhr.status < 300) {
                         try {
                             var response = JSON.parse(xhr.responseText)
-                            var fetchedDescription = root._formatMastodonAccountId(root._extractAccountName(response), apiHost)
+                            var fetchedDescription = root._formatMastodonAccountId(root._extractAccountName(response),
+                                                                                   apiHost)
+
                             if (fetchedDescription.length > 0) {
                                 accountDescription = fetchedDescription
                                 newAccount.setConfigurationValue("", "description", fetchedDescription)
                                 if (root._isMastodonAccountId(fetchedDescription)) {
-                                    newAccount.setConfigurationValue("", "default_credentials_username", fetchedDescription)
+                                    newAccount.setConfigurationValue("", "default_credentials_username",
+                                                                     fetchedDescription)
                                 }
                             }
                         } catch (err) {
