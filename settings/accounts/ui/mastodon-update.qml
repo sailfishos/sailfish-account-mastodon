@@ -14,7 +14,7 @@ AccountCredentialsAgent {
 
     property bool _started
 
-    readonly property string callbackUri: "http://ipv4.jolla.com/online/status.html"
+    readonly property string callbackUri: "https://ipv4.jolla.com/online/status.html"
 
     function normalizeApiHost(rawHost) {
         var host = rawHost ? rawHost.trim() : ""

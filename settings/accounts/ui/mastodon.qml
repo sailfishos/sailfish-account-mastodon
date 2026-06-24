@@ -19,7 +19,7 @@ AccountCreationAgent {
     property string _pendingApiHost
     property bool _registering
 
-    readonly property string callbackUri: "http://ipv4.jolla.com/online/status.html"
+    readonly property string callbackUri: "https://ipv4.jolla.com/online/status.html"
     readonly property string defaultApiHost: "https://mastodon.social"
 
     function normalizeApiHost(rawHost) {
