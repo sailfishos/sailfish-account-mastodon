@@ -207,7 +207,7 @@ AccountCreationAgent {
             "clientId": context.clientId,
             "clientSecret": context.clientSecret,
             "accessToken": _extractAccessToken(responseData),
-            "accountDescription": _formatMastodonAccountId(_extractAccountName(responseData), context.apiHost)
+            "mastodonAccountId": _formatMastodonAccountId(_extractAccountName(responseData), context.apiHost)
         }
         _accountSetup = accountSetupComponent.createObject(root, props)
         _accountSetup.done.connect(function() {
@@ -343,6 +343,7 @@ AccountCreationAgent {
 
     Component {
         id: accountSetupComponent
+
         QtObject {
             id: accountSetup
 
@@ -352,7 +353,7 @@ AccountCreationAgent {
             property string clientId
             property string clientSecret
             property string accessToken
-            property string accountDescription
+            property string mastodonAccountId
             property bool hasConfigured
 
             signal done()
@@ -388,10 +389,11 @@ AccountCreationAgent {
 
                 newAccount.setConfigurationValue("", "api/Host", apiHost)
                 newAccount.setConfigurationValue("", "FeedViewAutoSync", true)
-                if (accountDescription.length > 0) {
-                    newAccount.setConfigurationValue("", "description", accountDescription)
-                    if (root._isMastodonAccountId(accountDescription)) {
-                        newAccount.setConfigurationValue("", "default_credentials_username", accountDescription)
+
+                if (mastodonAccountId.length > 0) {
+                    newAccount.setConfigurationValue("", "description", mastodonAccountId)
+                    if (root._isMastodonAccountId(mastodonAccountId)) {
+                        newAccount.setConfigurationValue("", "default_credentials_username", mastodonAccountId)
                     }
                 } else {
                     var hostDisplayName = root._fallbackDisplayName(apiHost)
@@ -420,7 +422,7 @@ AccountCreationAgent {
                     newAccount.enableWithService(services[i])
                 }
 
-                if (accountDescription.length > 0 || accessToken.length === 0) {
+                if (mastodonAccountId.length > 0 || accessToken.length === 0) {
                     newAccount.sync()
                     return
                 }
@@ -434,15 +436,15 @@ AccountCreationAgent {
                     if (xhr.status >= 200 && xhr.status < 300) {
                         try {
                             var response = JSON.parse(xhr.responseText)
-                            var fetchedDescription = root._formatMastodonAccountId(root._extractAccountName(response),
-                                                                                   apiHost)
+                            var mastodonId = root._formatMastodonAccountId(root._extractAccountName(response),
+                                                                           apiHost)
 
-                            if (fetchedDescription.length > 0) {
-                                accountDescription = fetchedDescription
-                                newAccount.setConfigurationValue("", "description", fetchedDescription)
-                                if (root._isMastodonAccountId(fetchedDescription)) {
-                                    newAccount.setConfigurationValue("", "default_credentials_username",
-                                                                     fetchedDescription)
+                            if (mastodonId.length > 0) {
+                                accountSetup.mastodonAccountId = mastodonId
+                                newAccount.setConfigurationValue("", "description", mastodonId)
+
+                                if (root._isMastodonAccountId(mastodonId)) {
+                                    newAccount.setConfigurationValue("", "default_credentials_username", mastodonId)
                                 }
                             }
                         } catch (err) {
