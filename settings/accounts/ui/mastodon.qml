@@ -378,24 +378,18 @@ AccountCreationAgent {
             function configure() {
                 hasConfigured = true
 
-                var providerDisplayName = root.accountProvider && root.accountProvider.displayName
-                        ? root.accountProvider.displayName.toString().trim()
-                        : ""
-                if (providerDisplayName.length === 0) {
-                    //% "Mastodon"
-                    providerDisplayName = qsTrId("settings-accounts-mastodon-la-provider_name")
-                }
-                newAccount.displayName = providerDisplayName
-
                 newAccount.setConfigurationValue("", "api/Host", apiHost)
                 newAccount.setConfigurationValue("", "FeedViewAutoSync", true)
 
                 if (mastodonAccountId.length > 0) {
+                    newAccount.displayName = mastodonAccountId
                     newAccount.setConfigurationValue("", "description", mastodonAccountId)
                     if (root._isMastodonAccountId(mastodonAccountId)) {
                         newAccount.setConfigurationValue("", "default_credentials_username", mastodonAccountId)
                     }
                 } else {
+                    //% "Mastodon"
+                    newAccount.displayName = qsTrId("settings-accounts-mastodon-la-provider_name")
                     var hostDisplayName = root._fallbackDisplayName(apiHost)
                     if (hostDisplayName.length > 0) {
                         newAccount.setConfigurationValue("", "description", hostDisplayName)
@@ -441,7 +435,7 @@ AccountCreationAgent {
 
                             if (mastodonId.length > 0) {
                                 accountSetup.mastodonAccountId = mastodonId
-                                newAccount.setConfigurationValue("", "description", mastodonId)
+                                newAccount.displayName = mastodonId
 
                                 if (root._isMastodonAccountId(mastodonId)) {
                                     newAccount.setConfigurationValue("", "default_credentials_username", mastodonId)

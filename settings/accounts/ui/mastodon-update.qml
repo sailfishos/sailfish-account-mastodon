@@ -108,23 +108,22 @@ AccountCredentialsAgent {
         root.goToEndDestination()
     }
 
-    function _saveDescription(description) {
-        if (description.length > 0) {
-            account.setConfigurationValue("", "description", description)
-            if (_isMastodonAccountId(description)) {
-                account.setConfigurationValue("", "default_credentials_username", description)
-            }
+    function _saveMastodonAccountId(mastodonAccountId) {
+        account.setConfigurationValue("", "description", mastodonAccountId)
+
+        if (_isMastodonAccountId(mastodonAccountId)) {
+            account.setConfigurationValue("", "default_credentials_username", mastodonAccountId)
         }
         account.sync()
         _completeUpdate()
     }
 
-    function _updateDescription(responseData) {
+    function _updateCredentials(responseData) {
         var config = account.configurationValues("mastodon-microblog")
         var apiHost = normalizeApiHost(_valueFromServiceConfig(config, "api/Host"))
-        var description = _formatMastodonAccountId(_extractAccountName(responseData), apiHost)
-        if (description.length > 0) {
-            _saveDescription(description)
+        var mastodonAccountId = _formatMastodonAccountId(_extractAccountName(responseData), apiHost)
+        if (mastodonAccountId.length > 0) {
+            _saveMastodonAccountId(mastodonAccountId)
             return
         }
 
@@ -140,17 +139,17 @@ AccountCredentialsAgent {
                 return
             }
 
-            var fetchedDescription = ""
+            var fetchedAccountId = ""
             if (xhr.status >= 200 && xhr.status < 300) {
                 try {
                     var response = JSON.parse(xhr.responseText)
-                    fetchedDescription = _formatMastodonAccountId(_extractAccountName(response), apiHost)
+                    fetchedAccountId = _formatMastodonAccountId(_extractAccountName(response), apiHost)
                 } catch (err) {
                 }
             }
 
-            if (fetchedDescription.length > 0) {
-                _saveDescription(fetchedDescription)
+            if (fetchedAccountId.length > 0) {
+                _saveMastodonAccountId(fetchedAccountId)
             } else {
                 _completeUpdate()
             }
@@ -211,7 +210,7 @@ AccountCredentialsAgent {
         }
 
         onAccountCredentialsUpdated: {
-            root._updateDescription(responseData)
+            root._updateCredentials(responseData)
         }
 
         onAccountCredentialsUpdateError: {

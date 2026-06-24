@@ -2,7 +2,7 @@
 //
 // SPDX-License-Identifier: BSD-3-Clause
 
-import QtQuick 2.0
+import QtQuick 2.6
 import Sailfish.Silica 1.0
 import Sailfish.Accounts 1.0
 import com.jolla.settings.accounts 1.0
@@ -21,18 +21,6 @@ StandardAccountSettingsDisplay {
         var credentialsUserName = root.account.defaultCredentialsUserName
                 ? root.account.defaultCredentialsUserName.toString().trim()
                 : ""
-        if (descriptionValue.length > 0 && credentialsUserName !== descriptionValue) {
-            root.account.setConfigurationValue("", "default_credentials_username", descriptionValue)
-        }
-
-        // Reuse the standard "Description" field as the account handle editor.
-        if (descriptionValue.length > 0) {
-            root.account.displayName = descriptionValue
-        } else if (credentialsUserName.length > 0) {
-            root.account.displayName = credentialsUserName
-        } else {
-            root.account.displayName = ""
-        }
     }
 
     function _providerDisplayName() {
@@ -57,6 +45,7 @@ StandardAccountSettingsDisplay {
                 ? root.account.displayName.toString().trim()
                 : ""
         var providerDisplayName = _providerDisplayName()
+
         if (editedDescription === providerDisplayName) {
             // Avoid clobbering stored handle if displayName temporarily reverts to provider name.
             editedDescription = storedDescription.length > 0 ? storedDescription : storedCredentialsUserName
@@ -65,13 +54,6 @@ StandardAccountSettingsDisplay {
         if (storedDescription !== editedDescription) {
             root.account.setConfigurationValue("", "description", editedDescription)
         }
-
-        if (storedCredentialsUserName !== editedDescription) {
-            root.account.setConfigurationValue("", "default_credentials_username", editedDescription)
-        }
-
-        // Keep account list title fixed to provider name.
-        root.account.displayName = providerDisplayName
 
         if (eventsSyncSwitch.checked !== root.account.configurationValues("")["FeedViewAutoSync"]) {
             root.account.setConfigurationValue("", "FeedViewAutoSync", eventsSyncSwitch.checked)
