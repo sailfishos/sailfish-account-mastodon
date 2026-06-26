@@ -19,7 +19,7 @@ AccountCreationAgent {
     property string _pendingApiHost
     property bool _registering
 
-    readonly property string callbackUri: "http://ipv4.jolla.com/online/status.html"
+    readonly property string callbackUri: "https://ipv4.jolla.com/online/status.html"
     readonly property string defaultApiHost: "https://mastodon.social"
 
     function normalizeApiHost(rawHost) {
@@ -207,7 +207,7 @@ AccountCreationAgent {
             "clientId": context.clientId,
             "clientSecret": context.clientSecret,
             "accessToken": _extractAccessToken(responseData),
-            "accountDescription": _formatMastodonAccountId(_extractAccountName(responseData), context.apiHost)
+            "mastodonAccountId": _formatMastodonAccountId(_extractAccountName(responseData), context.apiHost)
         }
         _accountSetup = accountSetupComponent.createObject(root, props)
         _accountSetup.done.connect(function() {
@@ -343,6 +343,7 @@ AccountCreationAgent {
 
     Component {
         id: accountSetupComponent
+
         QtObject {
             id: accountSetup
 
@@ -352,7 +353,7 @@ AccountCreationAgent {
             property string clientId
             property string clientSecret
             property string accessToken
-            property string accountDescription
+            property string mastodonAccountId
             property bool hasConfigured
 
             signal done()
@@ -377,23 +378,18 @@ AccountCreationAgent {
             function configure() {
                 hasConfigured = true
 
-                var providerDisplayName = root.accountProvider && root.accountProvider.displayName
-                        ? root.accountProvider.displayName.toString().trim()
-                        : ""
-                if (providerDisplayName.length === 0) {
-                    //% "Mastodon"
-                    providerDisplayName = qsTrId("settings-accounts-mastodon-la-provider_name")
-                }
-                newAccount.displayName = providerDisplayName
-
                 newAccount.setConfigurationValue("", "api/Host", apiHost)
                 newAccount.setConfigurationValue("", "FeedViewAutoSync", true)
-                if (accountDescription.length > 0) {
-                    newAccount.setConfigurationValue("", "description", accountDescription)
-                    if (root._isMastodonAccountId(accountDescription)) {
-                        newAccount.setConfigurationValue("", "default_credentials_username", accountDescription)
+
+                if (mastodonAccountId.length > 0) {
+                    newAccount.displayName = mastodonAccountId
+                    newAccount.setConfigurationValue("", "description", mastodonAccountId)
+                    if (root._isMastodonAccountId(mastodonAccountId)) {
+                        newAccount.setConfigurationValue("", "default_credentials_username", mastodonAccountId)
                     }
                 } else {
+                    //% "Mastodon"
+                    newAccount.displayName = qsTrId("settings-accounts-mastodon-la-provider_name")
                     var hostDisplayName = root._fallbackDisplayName(apiHost)
                     if (hostDisplayName.length > 0) {
                         newAccount.setConfigurationValue("", "description", hostDisplayName)
@@ -420,7 +416,7 @@ AccountCreationAgent {
                     newAccount.enableWithService(services[i])
                 }
 
-                if (accountDescription.length > 0 || accessToken.length === 0) {
+                if (mastodonAccountId.length > 0 || accessToken.length === 0) {
                     newAccount.sync()
                     return
                 }
@@ -434,15 +430,15 @@ AccountCreationAgent {
                     if (xhr.status >= 200 && xhr.status < 300) {
                         try {
                             var response = JSON.parse(xhr.responseText)
-                            var fetchedDescription = root._formatMastodonAccountId(root._extractAccountName(response),
-                                                                                   apiHost)
+                            var mastodonId = root._formatMastodonAccountId(root._extractAccountName(response),
+                                                                           apiHost)
 
-                            if (fetchedDescription.length > 0) {
-                                accountDescription = fetchedDescription
-                                newAccount.setConfigurationValue("", "description", fetchedDescription)
-                                if (root._isMastodonAccountId(fetchedDescription)) {
-                                    newAccount.setConfigurationValue("", "default_credentials_username",
-                                                                     fetchedDescription)
+                            if (mastodonId.length > 0) {
+                                accountSetup.mastodonAccountId = mastodonId
+                                newAccount.displayName = mastodonId
+
+                                if (root._isMastodonAccountId(mastodonId)) {
+                                    newAccount.setConfigurationValue("", "default_credentials_username", mastodonId)
                                 }
                             }
                         } catch (err) {

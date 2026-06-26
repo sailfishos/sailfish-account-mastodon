@@ -20,7 +20,7 @@
                     <setting name="TokenPath">oauth/token</setting>
                     <setting name="ResponseType">code</setting>
                     <setting name="Scope" type="as">["read","write"]</setting>
-                    <setting name="RedirectUri">http://ipv4.jolla.com/online/status.html</setting>
+                    <setting name="RedirectUri">https://ipv4.jolla.com/online/status.html</setting>
                 </group>
             </group>
         </group>

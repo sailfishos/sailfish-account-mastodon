@@ -70,6 +70,8 @@ namespace {
     const char *const TrIdQuotedYourPost = QT_TRID_NOOP("sailfish-account-mastodon-notification-quoted_your_post");
     //% "updated a post that quoted you"
     const char *const TrIdUpdatedQuotedPost = QT_TRID_NOOP("sailfish-account-mastodon-notification-updated_quoted_post");
+    //: Used when a specific string doesn't exist for the notification type.
+    //: Akin to 'Something happened concerning this person'
     //% "sent you a notification"
     const char *const TrIdSentNotification = QT_TRID_NOOP("sailfish-account-mastodon-notification-sent_notification");
 
@@ -629,6 +631,7 @@ void MastodonNotificationsSyncAdaptor::finishedNotificationsHandler()
             const QString statusBody = sanitizeContent(statusObject.value(QStringLiteral("content")).toString());
             const QString action = actionText(notificationType);
             QString body;
+
             if (notificationType == QLatin1String("severed_relationships")) {
                 body = severedRelationshipsText(eventObject);
             } else if (notificationType == QLatin1String("moderation_warning")) {
