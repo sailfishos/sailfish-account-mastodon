@@ -89,7 +89,9 @@ namespace {
     const char *const TrIdTargetSuspended = QT_TRID_NOOP("sailfish-account-mastodon-notification-target_suspended");
     //% "Some follow relationships were severed"
     const char *const TrIdRelationshipsSevered = QT_TRID_NOOP("sailfish-account-mastodon-notification-relationships_severed");
-    //% "%1 (%2 followers, %3 following removed)"
+    //: %1 is the action, %2 is the removed followers text and
+    //: %3 is the removed following accounts text.
+    //% "%1 (%2, %3)"
     const char *const TrIdRelationshipsSummary = QT_TRID_NOOP("sailfish-account-mastodon-notification-relationships_summary");
 
     //% "A moderator sent you a warning"
@@ -166,6 +168,20 @@ namespace {
                 || notificationType == QLatin1String("moderation_warning");
     }
 
+    QString followersRemovedText(int count)
+    {
+        //: Count fragment in a relationship severance notification.
+        //% "%n follower(s) removed"
+        return qtTrId("sailfish-account-mastodon-notification-followers_removed", count);
+    }
+
+    QString followingRemovedText(int count)
+    {
+        //: Count fragment in a relationship severance notification.
+        //% "stopped following %n account(s)"
+        return qtTrId("sailfish-account-mastodon-notification-following_removed", count);
+    }
+
     QString severedRelationshipsText(const QJsonObject &eventObject)
     {
         const QString eventType = eventObject.value(QStringLiteral("type")).toString();
@@ -197,8 +213,8 @@ namespace {
 
         return qtTrId(TrIdRelationshipsSummary)
                 .arg(action)
-                .arg(followersCount)
-                .arg(followingCount);
+                .arg(followersRemovedText(followersCount))
+                .arg(followingRemovedText(followingCount));
     }
 
     QString moderationWarningText(const QJsonObject &warningObject)
